@@ -22,6 +22,7 @@ from collectives import models, api, forms
 from collectives.routes import root, profile, auth, administration, event, reservation
 from collectives.routes import payment, technician, activity_supervison, equipment
 from collectives.utils import extranet, init, jinja, error, payline
+from collectives.whatsapp import whatsapp
 
 csrf = CSRFProtect()
 
@@ -114,6 +115,7 @@ def create_app(config_filename="config.py"):
         app.register_blueprint(activity_supervison.blueprint)
         app.register_blueprint(equipment.blueprint)
         app.register_blueprint(reservation.blueprint)
+        app.register_blueprint(whatsapp.blueprint)
 
         # Error handling
         app.register_error_handler(werkzeug.exceptions.NotFound, error.not_found)

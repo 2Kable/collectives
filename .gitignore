@@ -1,5 +1,6 @@
 9842
 __pycache__
+*.pyc
 app.db
 uploads
 
