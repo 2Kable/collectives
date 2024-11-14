@@ -71,7 +71,7 @@ export default {
       <p-multiselect 
         class="select-type"
         v-model="filters.eventTypes" 
-        :options="config.activityList" 
+        :options="config.eventTypes" 
         optionLabel="name" 
         optionValue="id"
         placeholder="Tout types d'événement"

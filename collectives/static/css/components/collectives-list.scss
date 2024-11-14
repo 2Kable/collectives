@@ -47,14 +47,6 @@ $button-height:40px;
         }
     }
 
-    .tabulator-table {
-        width: 100%;
-    }
-
-    .slots .free_slot {
-        opacity: 0.5;
-    }
-
     .tabulator-selectable {
         border: 1px solid $color-gray-light !important;
         border-radius: 10px;
@@ -74,16 +66,28 @@ $button-height:40px;
         background-color: transparent;
     }
 
+    /**
+    Display accordion arrow on the left on desktop
+    */
+    .p-accordionheader {
+        @media (min-width: 700px) {
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+            svg {
+                flex: .05;
+            }
+        }
+    }
+
     &--item {
         text-decoration: none;
         height: $collectives-list-row-height;
+        padding: 0px !important;
+        margin: 0px !important;
 
         @media screen and (max-width: 700px) {
             height: auto;
         }
-
-        padding: 0px !important;
-        margin: 0px !important;
 
         &:hover {
             text-decoration: none;
@@ -105,7 +109,7 @@ $button-height:40px;
             height: $collectives-list-row-height;
             object-fit: cover;
             // Loading
-            .p-skeleton{
+            .p-skeleton {
                 border-radius: 0;
             }
         }
@@ -222,6 +226,7 @@ $button-height:40px;
                 img {
                     width: 65px;
                 }
+
                 .p-skeleton{
                     width: 65px;
                     height: 65px;
@@ -380,8 +385,8 @@ $button-height:40px;
         width: 360px;
         height: 40px;
         position: relative;
-        .p-multiselect-label {
-            padding: 0 3px;
+        .p-multiselect-label-container {
+            padding: 0 10px;
         }
     }
 

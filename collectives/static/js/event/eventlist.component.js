@@ -43,7 +43,7 @@ export default {
 
         function groupByDate(events) {
             return events.reduce((acc, event) => {
-                const date = moment(event.start).format("LL")
+                const date = moment(event.start).format("dddd Do MMMM YYYY")
                 if(!acc[date]) acc[date] = []
                 acc[date].push(event)
                 return acc
@@ -118,7 +118,7 @@ export default {
         <div ref="eventlist" id="eventlist" class="page-content">
             <div id="banner-message" v-if="config.siteParams.bannerMessage">
                 <h5 class="heading-1">Message important</h5>
-                <template v-html="config.siteParams.bannerMessage" />
+                <div v-html="config.siteParams.bannerMessage" />
             </div>
             <div class="collectives-list tabulator">
 
@@ -131,7 +131,9 @@ export default {
 
                 <Accordion v-if="!IsLoading()" multiple :value="Object.keys(events)">
                     <AccordionPanel :value="date" header="Header" toggleable v-for="(dateEvents, date) in events">
-                        <AccordionHeader>{{ date }}</AccordionHeader>
+                        <AccordionHeader>
+                            {{ date }}
+                        </AccordionHeader>
                         <AccordionContent>
                             <EventListItem v-for="eventItem in dateEvents" v-bind:eventItem="eventItem" :key="eventItem.id"/>
                         </AccordionContent>

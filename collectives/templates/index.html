@@ -1,29 +1,17 @@
-{% extends 'base.html' %} {% import 'macros.html' as macros with context %} {%
-block additionalhead %} {# Tabulator: for tables#}
-
-{# Autocomplete for leader lookup #}
-<script src="https://unpkg.com/js-autocomplete@1.0.4/auto-complete.min.js"></script>
-<link
-    href="https://unpkg.com/js-autocomplete@1.0.4/auto-complete.css"
-    rel="stylesheet"
-/>
-
-<script src="{{ url_for('api.models_to_js') }}"></script>
-<script src="{{ url_for('static', filename='js/tools.js') }}"></script>
-<script src="{{ url_for('static', filename='js/utils/autocomplete.js') }}"></script>
-
-{% endblock %} 
+{% extends 'base.html' %} 
 
 {%block content %}
 
 {# VUE JS APP #}
 <div id="app"></div>
 
+{# Polyfills for importmap #}
+<script async src="https://ga.jspm.io/npm:es-module-shims@1.10.1/dist/es-module-shims.js"></script>
 <script type="importmap">
 {
     "imports": {
         "axios": "https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.7/esm/axios.min.js",
-        "moment": "https://cdn.jsdelivr.net/npm/moment@2.30.1/+esm"
+        "moment": "https://esm.run/moment@2.30.1/min/moment-with-locales.min.js"
     }
 }
 </script>
@@ -35,7 +23,10 @@ block additionalhead %} {# Tabulator: for tables#}
 <script type="module">
 
     import axios from 'axios'
+    import moment from 'moment'
     import EventList from '{{ url_for('static', filename='js/event/eventlist.component.js') }}'
+   
+    moment.locale('fr')
     const { createApp } = Vue
     
     // TODO Move to async endpoint
@@ -65,7 +56,7 @@ block additionalhead %} {# Tabulator: for tables#}
         siteParams: {
             coverLogo: "{{ url_for('static', filename='caf/esprit club alpin '+Configuration.COVER_LOGO_COLOR+'.png') }}",
             arrowDown: "{{ url_for('static', filename='img/icon/ionicon/ios-arrow-down.svg') }}",
-            bannerMessage: "{{ markdown_to_html(Configuration.BANNER_MESSAGE) | safe}}"
+            bannerMessage: `{{ markdown_to_html(Configuration.BANNER_MESSAGE) | safe}}`
         },
     })
     app.use(PrimeVue.Config, {
