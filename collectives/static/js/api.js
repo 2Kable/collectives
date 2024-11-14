@@ -1,6 +1,19 @@
 
 import axios from 'axios'
 
+export async function searchLeaders(leaderNameQuery, resultLimit = 8) {
+  const res = await axios.get(
+    // TODO relative path
+    'https://collectives.cafannecy.fr/api/leaders/autocomplete/', 
+    {
+      params: {
+          q: leaderNameQuery,
+          l: resultLimit,
+      }
+  })
+  return res
+}
+
 export async function getEvents(pageParam, filters) {
 
   const res = await axios.get(

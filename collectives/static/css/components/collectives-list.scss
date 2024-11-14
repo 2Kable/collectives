@@ -353,8 +353,7 @@ $button-height:40px;
         }
     }
 
-    input[type=text].borders, 
-    label.borders {
+    .borders, input.date, .p-autocomplete-input{
         @extend %borders;
         height: $button-height;
         font-weight: normal;
@@ -367,6 +366,7 @@ $button-height:40px;
         max-width: 100%;
         .p-datepicker input {
             border: none;
+            max-width: 120px;
         }
     }
 

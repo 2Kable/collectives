@@ -1,4 +1,6 @@
-const { ref, inject } = Vue
+import { searchLeaders } from "../api.js";
+
+const { ref, inject, reactive } = Vue
 
 const selectedCity = ref();
 const cities = ref([
@@ -19,6 +21,19 @@ export default {
     const displayMoreFilters = ref(false)
     const config = inject('config')
 
+    const leadersSearch = reactive({
+      loading: false,
+      results: []
+    })
+
+    const fetchLeaders = async ({ query: leaderQueryName }) => {
+        if(!leaderQueryName) return
+        leadersSearch.loading = true
+        const { data } = await searchLeaders(leaderQueryName)
+        leadersSearch.results = data.map(res => res.full_name)
+        leadersSearch.loading = false
+    }
+
     return {
       displayMoreFilters,
       filters: props.filters,
@@ -26,6 +41,8 @@ export default {
       selectedCity, cities,
       value: 100,
       toggleCancelled: () => props.filters.displayCancelled = !props.filters.displayCancelled,
+      fetchLeaders,
+      leadersSearch,
     }
   },
   template: `
@@ -81,7 +98,14 @@ export default {
 
       <input class="borders" id="title" type="text" v-model="filters.title" placeholder="🔍 Titre">
 
-      <input class="borders" id="leader" type="text" v-model="filters.leader" placeholder="🔍 Encadrant">
+      <AutoComplete 
+        id="leader" 
+        v-model="filters.leader" 
+        :suggestions="leadersSearch.results" 
+        :loading="leadersSearch.loading"
+        @complete="fetchLeaders" 
+        placeholder="🔍 Encadrant"
+      />
 
       <div id="cancelled" class="toggle-button font-size-s"  @click="toggleCancelled" :class="{ enabled: filters.displayCancelled }">
         Sorties annulées :
