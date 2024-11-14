@@ -26,10 +26,19 @@ export default {
             displayCancelled: false, 
         })
 
+        function groupByDate(events) {
+            return events.reduce((acc, event) => {
+                const date = moment(event.start).format("LL")
+                if(!acc[date]) acc[date] = []
+                acc[date].push(event)
+                return acc
+            }, {})
+        }
+
         watch([eventParams, eventFilters], async ([params, filters]) => {
             loading.value = true
             const { data } = await getEvents(params, filters)
-            events.value = data.data
+            events.value = groupByDate(data.data)
             // TODO Improve API
             eventCount.value = data.last_page * params.pageSize
             loading.value = false
@@ -67,9 +76,14 @@ export default {
             </template>
 
 
-            <template v-if="!IsLoading()">
-                <EventListItem v-for="eventItem in events" v-bind:eventItem="eventItem" :key="eventItem.id"/>
-            </template>
+            <Accordion v-if="!IsLoading()" multiple :value="Object.keys(events)">
+                <AccordionPanel :value="date" header="Header" toggleable v-for="(dateEvents, date) in events">
+                    <AccordionHeader>{{ date }}</AccordionHeader>
+                    <AccordionContent>
+                        <EventListItem v-for="eventItem in dateEvents" v-bind:eventItem="eventItem" :key="eventItem.id"/>
+                    </AccordionContent>
+                </AccordionPanel>
+            </Accordion>
 
             <Paginator 
                 @update:first="setPage"
