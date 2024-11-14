@@ -4,10 +4,11 @@ import { getEvents } from '../api.js'
 import moment from 'moment'
 import EventListSkeleton from './eventlist-skeleton.component.js'
 
-const { ref, watch, reactive } = Vue
+const { ref, watch, reactive, inject, onMounted, useTemplateRef } = Vue
 
 export default {
     setup() {
+        const config = inject('config')
         const loading = ref(false)
         const eventParams = reactive({
             page: 1,
@@ -15,6 +16,7 @@ export default {
         })
         const events = ref([])
         const eventCount = ref(0)
+        const eventlistRefEl = useTemplateRef('eventlist')
 
         const eventFilters = reactive({
             activities: [],
@@ -44,6 +46,7 @@ export default {
             loading.value = false
         }, { immediate: true })
 
+
         function setPage(pageIndex) {
             eventParams.page = (pageIndex / eventParams.pageSize) +1
         }
@@ -51,14 +54,27 @@ export default {
             eventParams.pageSize = pageSize
         }
 
+        /**
+         * Smooth scroll to the top of the event list
+         */
+function gotoEvents() {
+            eventlistRefEl.value.scrollIntoView({ behavior: 'smooth' }) 
+        }
+
+        onMounted(() => {
+                gotoEvents()
+        })
+
         return { 
             events,
+            config,
             IsLoading: () => loading.value,
             eventParams,
             eventFilters,
             eventCount,
             setPage,
             setPageSize,
+            gotoEvents,
         }
     },
     components: {
@@ -67,32 +83,52 @@ export default {
         EventListSkeleton
     },
     template: `
-        <div class="collectives-list tabulator">
+        <div id="cover">
+            <div>
+                <img
+                    :src="config.siteParams.coverLogo"
+                    class="motto"
+                />
+                <br />
+                <img
+                    :src="config.siteParams.arrowDown"
+                    class="arrow"
+                    @click="gotoEvents()"
+                />
+            </div>
+        </div>
+        <div ref="eventlist" id="eventlist" class="page-content">
+            <div id="banner-message" v-if="config.siteParams.bannerMessage">
+                <h5 class="heading-1">Message important</h5>
+                <template v-html="config.siteParams.bannerMessage" />
+            </div>
+            <div class="collectives-list tabulator">
 
-            <EventListFilters v-bind:filters="eventFilters"/>
+                <EventListFilters v-bind:filters="eventFilters"/>
 
-            <template v-if="IsLoading()">
-                <EventListSkeleton v-for="n in 5" v-bind:eventItem="null" :key="n"/>
-            </template>
+                <template v-if="IsLoading()">
+                    <EventListSkeleton v-for="n in 5" v-bind:eventItem="null" :key="n"/>
+                </template>
 
 
-            <Accordion v-if="!IsLoading()" multiple :value="Object.keys(events)">
-                <AccordionPanel :value="date" header="Header" toggleable v-for="(dateEvents, date) in events">
-                    <AccordionHeader>{{ date }}</AccordionHeader>
-                    <AccordionContent>
-                        <EventListItem v-for="eventItem in dateEvents" v-bind:eventItem="eventItem" :key="eventItem.id"/>
-                    </AccordionContent>
-                </AccordionPanel>
-            </Accordion>
+                <Accordion v-if="!IsLoading()" multiple :value="Object.keys(events)">
+                    <AccordionPanel :value="date" header="Header" toggleable v-for="(dateEvents, date) in events">
+                        <AccordionHeader>{{ date }}</AccordionHeader>
+                        <AccordionContent>
+                            <EventListItem v-for="eventItem in dateEvents" v-bind:eventItem="eventItem" :key="eventItem.id"/>
+                        </AccordionContent>
+                    </AccordionPanel>
+                </Accordion>
 
-            <Paginator 
-                @update:first="setPage"
-                @update:rows="setPageSize"
-                :totalRecords="eventCount" 
-                :rows="eventParams.pageSize" 
-                :rowsPerPageOptions="[25, 50, 100]"
-            ></Paginator>
+                <Paginator 
+                    @update:first="setPage"
+                    @update:rows="setPageSize"
+                    :totalRecords="eventCount" 
+                    :rows="eventParams.pageSize" 
+                    :rowsPerPageOptions="[25, 50, 100]"
+                ></Paginator>
 
+            </div>
         </div>
     `,
 }

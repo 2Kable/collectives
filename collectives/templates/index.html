@@ -16,96 +16,88 @@ block additionalhead %} {# Tabulator: for tables#}
 
 {%block content %}
 
-{# TODO Add gotoEvents routine (scroll down on arrow click) #} 
-<div id="cover">
-    <div>
-        <img
-            src="{{ url_for('static', filename='caf/esprit club alpin '+Configuration.COVER_LOGO_COLOR+'.png') }}"
-            class="motto"
-        />
-        <br />
-        <img
-            src="{{ url_for('static', filename='img/icon/ionicon/ios-arrow-down.svg') }}"
-            class="arrow"
-            onclick="gotoEvents()"
-        />
-    </div>
-</div>
+{# VUE JS APP #}
+<div id="app"></div>
 
-<div id="eventlist" class="page-content">
-    {% if Configuration.BANNER_MESSAGE %}
-    <div id="banner-message">
-        <h5 class="heading-1">Message important</h5>
-        {{ markdown_to_html(Configuration.BANNER_MESSAGE) | safe }}
-    </div>
-    {% endif %}
-
-    {# VUE JS APP #}
-
-    <div id="app">
-    </div>
-
-    <script type="importmap">
-    {
-        "imports": {
-            "axios": "https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.7/esm/axios.min.js",
-            "moment": "https://cdn.jsdelivr.net/npm/moment@2.30.1/+esm"
-        }
+<script type="importmap">
+{
+    "imports": {
+        "axios": "https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.7/esm/axios.min.js",
+        "moment": "https://cdn.jsdelivr.net/npm/moment@2.30.1/+esm"
     }
-    </script>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="https://unpkg.com/primevue/umd/primevue.min.js"></script>
-    <script src="https://unpkg.com/@primevue/themes/umd/aura.min.js"></script>
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/vue@3.5.12/dist/vue.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/primevue@4.2.2/umd/primevue.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@primevue/themes@4.2.2/umd/aura.min.js"></script>
 
-    <script type="module">
 
-        import axios from 'axios'
-        import EventList from '{{ url_for('static', filename='js/event/eventlist.component.js') }}'
-        const { createApp } = Vue
-        
-        // TODO Move to async endpoint
-        const activityList = [
-            {% for type in activity_types %}
-                { "id": "{{type.short}}", "name": "{{type.name}}"},
-            {% endfor %}
-        ]
+<script type="module">
 
-        const eventTypes = [
-            {% for type in event_types %}
-                { "id": "{{type.short}}", "name": "{{type.name}}"},
-            {% endfor %}
-        ]
+    import axios from 'axios'
+    import EventList from '{{ url_for('static', filename='js/event/eventlist.component.js') }}'
+    const { createApp } = Vue
+    
+    // TODO Move to async endpoint
+    const activityList = [
+        {% for type in activity_types %}
+            { "id": "{{type.short}}", "name": "{{type.name}}"},
+        {% endfor %}
+    ]
 
-        const eventTags = [
-            {% for tag in models.EventTag.all().values() %}
-                { "id": "{{tag['short']}}", "name": "{{tag['name']}}"},
-            {% endfor %}
-        ]
-        const app = createApp(EventList)
-        app.provide('config', {
-            activityList,
-            eventTypes,
-            eventTags,
-        })
-        app.use(PrimeVue.Config, {
-        theme: {
-            preset: PrimeVue.Themes.Aura
-            }
+    const eventTypes = [
+        {% for type in event_types %}
+            { "id": "{{type.short}}", "name": "{{type.name}}"},
+        {% endfor %}
+    ]
+
+    const eventTags = [
+        {% for tag in models.EventTag.all().values() %}
+            { "id": "{{tag['short']}}", "name": "{{tag['name']}}"},
+        {% endfor %}
+    ]
+    const app = createApp(EventList)
+    app.provide('config', {
+        activityList,
+        eventTypes,
+        eventTags,
+        isAuthenticated: {{ current_user.is_authenticated|tojson }},
+        siteParams: {
+            coverLogo: "{{ url_for('static', filename='caf/esprit club alpin '+Configuration.COVER_LOGO_COLOR+'.png') }}",
+            arrowDown: "{{ url_for('static', filename='img/icon/ionicon/ios-arrow-down.svg') }}",
+            bannerMessage: "{{ markdown_to_html(Configuration.BANNER_MESSAGE) | safe}}"
+        },
+    })
+    app.use(PrimeVue.Config, {
+    theme: {
+        preset: PrimeVue.Themes.Aura
+        }
+    });
+
+    app.component('p-datepicker', PrimeVue.DatePicker);
+    app.component('p-multiselect', PrimeVue.MultiSelect);
+    app.component('DataView', PrimeVue.DataView);
+    app.component('Paginator', PrimeVue.Paginator);
+    app.component('Skeleton', PrimeVue.Skeleton);
+    app.component('AutoComplete', PrimeVue.AutoComplete);
+    app.component('Accordion', PrimeVue.Accordion );
+    app.component('AccordionPanel', PrimeVue.AccordionPanel );
+    app.component('AccordionHeader', PrimeVue.AccordionHeader );
+    app.component('AccordionContent', PrimeVue.AccordionContent );
+    app.mount('#app')
+
+    function gotoEvents(event){
+        // if we are not on top during a load, do not mess with page position
+        if(window.scrollY > 50 && event.type !== 'click')
+            return 0;
+
+        var position = document.querySelector('#eventlist').getBoundingClientRect().top +  window.scrollY - 60;
+        window.scrollTo(    {
+            top: position,
+            behavior: 'smooth'
         });
+    }
 
-        app.component('p-datepicker', PrimeVue.DatePicker);
-        app.component('p-multiselect', PrimeVue.MultiSelect);
-        app.component('DataView', PrimeVue.DataView);
-        app.component('Paginator', PrimeVue.Paginator);
-        app.component('Skeleton', PrimeVue.Skeleton);
-        app.component('AutoComplete', PrimeVue.AutoComplete);
-        app.component('Accordion', PrimeVue.Accordion );
-        app.component('AccordionPanel', PrimeVue.AccordionPanel );
-        app.component('AccordionHeader', PrimeVue.AccordionHeader );
-        app.component('AccordionContent', PrimeVue.AccordionContent );
-        app.mount('#app')
+</script>
 
-    </script>
-
-</div>
 {% endblock %}

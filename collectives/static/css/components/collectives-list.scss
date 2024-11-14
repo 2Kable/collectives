@@ -5,6 +5,11 @@ $button-height:40px;
     border-radius: 100px;
 }
 
+#eventlist {
+    // Account for header when auto-scrolling
+    scroll-margin: 80px;
+}
+
 .collectives-list {
     min-height: 100vh;
 
@@ -360,7 +365,7 @@ $button-height:40px;
         color: $color-gray-dark;
         padding: 1px 10px;
         max-width: 100%;
-    
+        flex-grow: 1;
         display: flex;
         align-items: center;
         max-width: 100%;
