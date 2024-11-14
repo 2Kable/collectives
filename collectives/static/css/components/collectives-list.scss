@@ -380,6 +380,9 @@ $button-height:40px;
         width: 360px;
         height: 40px;
         position: relative;
+        .p-multiselect-label {
+            padding: 0 3px;
+        }
     }
 
 }

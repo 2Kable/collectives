@@ -15,24 +15,31 @@ export default {
 
         const config = inject('config')
         const loading = ref(false)
+        const events = ref([])
+        const eventCount = ref(0)
+        const eventlistRefEl = useTemplateRef('eventlist')
+
         const eventParams = reactive({
             page: startingPage,
             pageSize: 25,
             first: (startingPage - 1) * 25 + 1,
         })
-        const events = ref([])
-        const eventCount = ref(0)
-        const eventlistRefEl = useTemplateRef('eventlist')
 
         const eventFilters = reactive({
-            activities: [],
-            eventTypes: [],
-            eventTags: [],
+            activities: localStorage.getItem('eventlist-filters') ? JSON.parse(localStorage.getItem('eventlist-filters')).activities : [],
+            eventTypes: localStorage.getItem('eventlist-filters') ? JSON.parse(localStorage.getItem('eventlist-filters')).eventTypes : [],
+            eventTags: localStorage.getItem('eventlist-filters') ? JSON.parse(localStorage.getItem('eventlist-filters')).eventTags : [],
             date: moment().format("DD/MM/YYYY"),
             title: null,
             leader: null,
             displayCancelled: false, 
         })
+
+        function saveFiltersToLocalStorage(){
+            localStorage.setItem('eventlist-filters', JSON.stringify(eventFilters))
+        }
+        watch(eventFilters, (filters) => saveFiltersToLocalStorage(filters))
+
 
         function groupByDate(events) {
             return events.reduce((acc, event) => {
@@ -43,8 +50,11 @@ export default {
             }, {})
         }
 
+        /**
+         * Watch for changes in eventParams and eventFilters
+         * Set Loaders and request the events for the given parameters and filters
+         */
         watch([eventParams, eventFilters], async ([params, filters]) => {
-            console.log(eventParams)
             loading.value = true
             const { data } = await getEvents(params, filters)
             events.value = groupByDate(data.data)
@@ -66,7 +76,7 @@ export default {
         /**
          * Smooth scroll to the top of the event list
          */
-function gotoEvents() {
+        function gotoEvents() {
             eventlistRefEl.value.scrollIntoView({ behavior: 'smooth' }) 
         }
 
