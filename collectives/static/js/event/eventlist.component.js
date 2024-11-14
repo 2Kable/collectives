@@ -8,11 +8,17 @@ const { ref, watch, reactive, inject, onMounted, useTemplateRef } = Vue
 
 export default {
     setup() {
+        // Compute Starting Page
+        const pageNumberRegex = /#(\d+)/;
+        const pageNumberMatch = window.location.hash.match(pageNumberRegex)
+        const startingPage = pageNumberMatch && pageNumberMatch[1] ? Number(pageNumberMatch[1]) : 1
+
         const config = inject('config')
         const loading = ref(false)
         const eventParams = reactive({
-            page: 1,
+            page: startingPage,
             pageSize: 25,
+            first: (startingPage - 1) * 25 + 1,
         })
         const events = ref([])
         const eventCount = ref(0)
@@ -38,6 +44,7 @@ export default {
         }
 
         watch([eventParams, eventFilters], async ([params, filters]) => {
+            console.log(eventParams)
             loading.value = true
             const { data } = await getEvents(params, filters)
             events.value = groupByDate(data.data)
@@ -47,11 +54,13 @@ export default {
         }, { immediate: true })
 
 
-        function setPage(pageIndex) {
-            eventParams.page = (pageIndex / eventParams.pageSize) +1
-        }
-        function setPageSize(pageSize) {
-            eventParams.pageSize = pageSize
+
+        function setPaginator(pageState) {
+            const pageNumber = pageState.page + 1
+            eventParams.page = pageNumber
+            eventParams.pageSize = pageState.rows
+            eventParams.first = pageState.page * pageState.rows + 1
+            history.pushState(null,null,'#' + pageNumber);
         }
 
         /**
@@ -72,8 +81,7 @@ function gotoEvents() {
             eventParams,
             eventFilters,
             eventCount,
-            setPage,
-            setPageSize,
+            setPaginator,
             gotoEvents,
         }
     },
@@ -121,8 +129,8 @@ function gotoEvents() {
                 </Accordion>
 
                 <Paginator 
-                    @update:first="setPage"
-                    @update:rows="setPageSize"
+                    @page="setPaginator"
+                    :first="eventParams.first"
                     :totalRecords="eventCount" 
                     :rows="eventParams.pageSize" 
                     :rowsPerPageOptions="[25, 50, 100]"
