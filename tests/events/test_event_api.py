@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from collectives.models import ActivityType, db
+from collectives.models import ActivityType, db, EventTag
 
 # pylint: disable=unused-argument,too-many-arguments
 # pylint: disable=too-many-positional-arguments
@@ -187,19 +187,24 @@ def test_event_filter_activity_with_several_types(user1_client, event1, event2, 
     assert data[0]["event_types"][0]["name"] == "Collective"
 
 
-def test_event_filter_tag(user1_client, event1, event2, tagged_event):
-    """Test list of event with tag filter"""
+def test_event_filter_tags(user1_client, event1, event2, event3):
+    """Test list of event with tag filters"""
+    event1.tag_refs.append(EventTag(6))
+    event2.tag_refs.append(EventTag(2))
 
     response = user1_client.get(
         "/api/events/?page=1&size=25&sorters[0][field]=start&sorters[0][dir]=asc"
         f"&filters[0][field]=end&filters[0][type]=>%3D&filters[0][value]={today()}"
         "&filters[1][field]=tags&filters[1][type]=%3D&filters[1][value]=tag_handicaf"
+        "&filters[2][field]=tags&filters[2][type]=%3D&filters[2][value]=tag_mountain_protection"
     )
     assert response.status_code == 200
     data = response.json["data"]
-    assert len(data) == 1
-    assert data[0]["title"] == tagged_event.title
+    assert len(data) == 2
+    assert data[0]["title"] == event1.title
     assert data[0]["tags"][0]["name"] == "Handicaf"
+    assert data[1]["title"] == event2.title
+    assert data[1]["tags"][0]["name"] == "CPM"
 
 
 def test_event_title_search(user1_client, event1, event2):
