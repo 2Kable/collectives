@@ -8,6 +8,7 @@ export default defineConfig(({ command }) => ({
   resolve: {
     alias: {
       "@": resolve(__dirname, "./src"),
+      "@styles": resolve(__dirname, "../collectives/static/css"),
     },
   },
   server: {

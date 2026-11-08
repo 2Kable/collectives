@@ -23,7 +23,8 @@ runs on MariaDB, development and tests also on SQLite.
  * Lint Python: `uvx ruff check`
  * Tests Python: `uv run pytest tests/<file>` (run the files related to the change)
  * Install Frontend: `npm --prefix frontend install`
- * Dev Server (HMR): `npm --prefix frontend run dev`
+ * Dev Server (Backend): `./run.py` (pass `--vite` to launch Vite concurrently)
+ * Dev Server (Frontend standalone): `npm --prefix frontend run dev`
  * Lint & Format Frontend: `npm --prefix frontend run lint` / `npm --prefix frontend run format`
  * Test & Build Frontend: `npm --prefix frontend run test` / `npm --prefix frontend run build`
  * All CI jobs locally: `./run_ci_jobs_locally.sh`
@@ -32,6 +33,16 @@ runs on MariaDB, development and tests also on SQLite.
 Follow [CODING.md](CODING.md) when writing code, commit messages and pull
 requests. For any code review, follow its *Code review* section exactly,
 including the output format.
+
+### Targeted testing
+To prevent slow iteration and unnecessary test overhead:
+ * **Frontend tasks** (files under `frontend/` or UI styling): only run frontend linting, tests, or build:
+   `npm --prefix frontend run lint` / `npm --prefix frontend run test`
+   Do NOT run `pytest` or backend checks for frontend-only changes.
+ * **Backend tasks** (files under `collectives/`, `tests/`, etc.): only run the specific pytest file(s) related to the change:
+   `uv run pytest tests/<file>`
+   Do NOT run frontend tests or the full backend test suite for backend-only changes.
+ * Only run full CI or both suites (`./run_ci_jobs_locally.sh`) when touching cross-cutting integrations or explicitly requested.
 
 @CODING.md
 

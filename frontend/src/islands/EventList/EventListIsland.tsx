@@ -7,6 +7,7 @@ import type { EventFiltersState, EventItem, EventListProps } from "@/types/event
 import { Accordion, AccordionTab } from "primereact/accordion";
 import { Paginator, type PaginatorPageChangeEvent } from "primereact/paginator";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import "./EventList.scss";
 
 const FILTERS_STORAGE_KEY = "eventlist-filters";
 const DEFAULT_PAGE_SIZE = 25;
@@ -138,6 +139,7 @@ export default function EventListIsland(props: EventListProps) {
     if (typeof window !== "undefined") {
       window.history.pushState(null, "", `#${pageNumber}`);
     }
+    gotoEvents();
   };
 
   const dateKeys = Object.keys(groupedEvents);

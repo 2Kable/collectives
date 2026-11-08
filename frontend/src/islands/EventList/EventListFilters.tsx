@@ -1,11 +1,9 @@
 import { searchLeaders } from "@/api/events";
+import { FilterDropdownSelect } from "@/components/FilterDropdownSelect";
 import { EventListActivityFilter } from "@/islands/EventList/EventListActivityFilter";
 import type { ActivityGroup, EventFiltersState, NamedOption } from "@/types/event";
 import { AutoComplete, type AutoCompleteCompleteEvent } from "primereact/autocomplete";
-import { Button } from "primereact/button";
 import { Calendar } from "primereact/calendar";
-import { Chip } from "primereact/chip";
-import { MultiSelect } from "primereact/multiselect";
 import { useMemo, useState } from "react";
 
 const isSet = (value: unknown): boolean =>
@@ -88,10 +86,6 @@ export function EventListFilters({
     setLeaderSuggestions(results.map((item) => item.full_name));
   };
 
-  const findInOptions = (list: NamedOption[], id: string) => list.find((item) => item.id === id);
-
-  const removeElement = (list: string[], id: string) => list.filter((item) => item !== id);
-
   return (
     <div
       className="collectives-list-filters"
@@ -126,150 +120,37 @@ export function EventListFilters({
 
       {displayMoreFilters && (
         <>
-          <MultiSelect
+          <FilterDropdownSelect
             className="select-type"
-            value={filters.eventTypes}
+            placeholder="Tous types"
+            ariaLabel="Filtrer par type d'événement"
             options={eventTypes}
-            optionLabel="name"
-            optionValue="id"
-            scrollHeight="90vh"
-            placeholder="Tout types d'événement"
-            display="chip"
-            appendTo="self"
-            showSelectAll={false}
-            aria-label="Filtrer par type d'événement"
-            onChange={(e) => updateFilters({ eventTypes: e.value || [] })}
-            pt={{
-              panel: { className: "p-multiselect-overlay" },
-              list: { className: "p-multiselect-list" },
-              item: { className: "p-multiselect-option" },
-            }}
-            itemTemplate={(option: NamedOption) => (
-              <div className="flex items-center">
-                <img className="icon" alt={option.name} src={`/static/caf/icon/${option.id}.svg`} />
-                <div>{option.name}</div>
-              </div>
-            )}
-            selectedItemTemplate={(value: string) => {
-              if (!value) {
-                return null;
-              }
-              const found = findInOptions(eventTypes, value);
-              if (!found) {
-                return null;
-              }
-              return (
-                <Chip
-                  key={value}
-                  label={found.name}
-                  image={`/static/caf/icon/${value}.svg`}
-                  removable
-                  onRemove={() => {
-                    updateFilters({
-                      eventTypes: removeElement(filters.eventTypes, value),
-                    });
-                    return true;
-                  }}
-                />
-              );
-            }}
-            panelFooterTemplate={() =>
-              filters.eventTypes.length > 0 ? (
-                <div className="flex justify-between">
-                  <div />
-                  <Button
-                    label="Effacer"
-                    severity="danger"
-                    text
-                    size="small"
-                    icon="pi pi-times"
-                    onClick={() => updateFilters({ eventTypes: [] })}
-                  />
-                </div>
-              ) : null
-            }
+            value={filters.eventTypes}
+            onChange={(eventTypes) => updateFilters({ eventTypes })}
+            getIconUrl={(item) => `/static/caf/icon/${item.id}.svg`}
           />
 
-          <MultiSelect
+          <FilterDropdownSelect
             className="select-tag"
-            value={filters.eventTags}
-            options={eventTags}
-            optionLabel="name"
-            optionValue="id"
-            scrollHeight="90vh"
             placeholder="Tous labels"
-            display="chip"
-            appendTo="self"
-            showSelectAll={false}
-            aria-label="Filtrer par label"
-            onChange={(e) => updateFilters({ eventTags: e.value || [] })}
-            pt={{
-              panel: { className: "p-multiselect-overlay" },
-              list: { className: "p-multiselect-list" },
-              item: { className: "p-multiselect-option" },
-            }}
-            itemTemplate={(option: NamedOption) => (
-              <div className="flex items-center">
-                <img className="icon" alt={option.name} src={`/static/caf/icon/${option.id}.svg`} />
-                <div>{option.name}</div>
-              </div>
-            )}
-            selectedItemTemplate={(value: string) => {
-              if (!value) {
-                return null;
-              }
-              const found = findInOptions(eventTags, value);
-              if (!found) {
-                return null;
-              }
-              return (
-                <Chip
-                  key={value}
-                  label={found.name}
-                  image={`/static/caf/icon/${value}.svg`}
-                  removable
-                  onRemove={() => {
-                    updateFilters({
-                      eventTags: removeElement(filters.eventTags, value),
-                    });
-                    return true;
-                  }}
-                />
-              );
-            }}
-            panelFooterTemplate={() =>
-              filters.eventTags.length > 0 ? (
-                <div className="flex justify-between">
-                  <div />
-                  <Button
-                    label="Effacer"
-                    severity="danger"
-                    text
-                    size="small"
-                    icon="pi pi-times"
-                    onClick={() => updateFilters({ eventTags: [] })}
-                  />
-                </div>
-              ) : null
-            }
+            ariaLabel="Filtrer par label"
+            options={eventTags}
+            value={filters.eventTags}
+            onChange={(eventTags) => updateFilters({ eventTags })}
+            getIconUrl={(item) => `/static/caf/icon/${item.id}.svg`}
           />
 
-          <div className="input date">
-            <label className="borders" htmlFor="filter-date">
-              <i className="pi pi-calendar" />
-              Depuis
-              <Calendar
-                inputId="filter-date"
-                dateFormat="dd/mm/yy"
-                value={filters.date}
-                onChange={(e) => updateFilters({ date: e.value ?? null })}
-                placeholder="Aujourd'hui"
-                pt={{
-                  root: { className: "p-datepicker" },
-                }}
-              />
-            </label>
-          </div>
+          <label className="borders" htmlFor="filter-date">
+            <i className="pi pi-calendar" />
+            <span>Depuis</span>
+            <Calendar
+              inputId="filter-date"
+              dateFormat="dd/mm/yy"
+              value={filters.date}
+              onChange={(e) => updateFilters({ date: e.value ?? null })}
+              placeholder="Aujourd'hui"
+            />
+          </label>
 
           <label className="borders" htmlFor="filter-title">
             <i className="pi pi-search" />

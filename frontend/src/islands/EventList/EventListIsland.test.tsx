@@ -104,4 +104,69 @@ describe("EventListIsland", () => {
     expect(screen.getByPlaceholderText("Titre")).toBeDefined();
     expect(screen.getByText(/Sorties annulées/)).toBeDefined();
   });
+
+  it("hides the activity filter hint when an activity is selected", async () => {
+    vi.spyOn(eventsApi, "getEvents").mockResolvedValue({
+      data: [sampleEvent],
+      last_page: 1,
+      total: 1,
+    });
+
+    render(
+      <PrimeReactProvider value={{ locale: "fr" }}>
+        <EventListIsland {...sampleProps} />
+      </PrimeReactProvider>,
+    );
+
+    const activityTrigger = screen.getByRole("button", { name: "Filtrer par activité" });
+    const triggerLabel = activityTrigger.querySelector(".activity-filter-trigger-label");
+    expect(triggerLabel?.className).toContain("p-placeholder");
+    expect(screen.getByText("Toutes activités").className).toContain("p-placeholder");
+
+    fireEvent.click(activityTrigger);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Alpinisme")).toBeDefined();
+      expect(screen.queryByText("Rien de coché : toutes les sorties sont affichées.")).toBeNull();
+      expect(screen.queryByText("Effacer")).toBeNull();
+    });
+
+    const alpinismeCheckbox = screen.getByLabelText("Alpinisme");
+    fireEvent.click(alpinismeCheckbox);
+
+    await waitFor(() => {
+      expect(screen.getByText("Effacer")).toBeDefined();
+      expect(triggerLabel?.className).not.toContain("p-placeholder");
+    });
+  });
+
+  it("scrolls to events when paginator page changes", async () => {
+    vi.spyOn(eventsApi, "getEvents").mockResolvedValue({
+      data: [sampleEvent],
+      last_page: 3,
+      total: 75,
+    });
+
+    const scrollIntoViewMock = vi.fn();
+    window.HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
+
+    render(
+      <PrimeReactProvider value={{ locale: "fr" }}>
+        <EventListIsland {...sampleProps} />
+      </PrimeReactProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Traversée des Aravis")).toBeDefined();
+    });
+
+    scrollIntoViewMock.mockClear();
+
+    const page2Button = screen.getByRole("button", { name: "Page 2" });
+    fireEvent.click(page2Button);
+
+    await waitFor(() => {
+      expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: "smooth" });
+    });
+  });
 });

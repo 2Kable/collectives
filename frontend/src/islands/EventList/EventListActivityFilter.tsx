@@ -130,24 +130,26 @@ export function EventListActivityFilter({ groups, value, onChange }: EventListAc
         onClick={handleToggleOverlay}
         onKeyDown={handleKeyDown}
       >
-        <span className="activity-filter-trigger-label">
-          {summary && <span>{summary}</span>}
-          {chips.map((item) => (
-            <span
-              key={item.id}
-              onClick={(e) => e.stopPropagation()}
-              onKeyDown={(e) => e.stopPropagation()}
-            >
-              <Chip
-                label={item.name}
-                image={iconUrl(item)}
-                removable
-                onRemove={() => {
-                  toggleItem(item.id);
-                  return true;
-                }}
-              />
+        <span
+          className={`activity-filter-trigger-label${selected.size === 0 ? " is-placeholder p-placeholder" : ""}`}
+        >
+          {summary && (
+            <span className={selected.size === 0 ? "is-placeholder p-placeholder" : undefined}>
+              {summary}
             </span>
+          )}
+          {chips.map((item) => (
+            <Chip
+              key={item.id}
+              label={item.name}
+              image={iconUrl(item)}
+              removable
+              onClick={(e) => e.stopPropagation()}
+              onRemove={() => {
+                toggleItem(item.id);
+                return false;
+              }}
+            />
           ))}
         </span>
         <i className="pi pi-chevron-down" />
@@ -191,11 +193,8 @@ export function EventListActivityFilter({ groups, value, onChange }: EventListAc
               );
             })}
           </div>
-          <div className="activity-filter-footer">
-            <span className="activity-filter-hint">
-              Rien de coché : toutes les sorties sont affichées.
-            </span>
-            {selected.size > 0 && (
+          {selected.size > 0 && (
+            <div className="activity-filter-footer">
               <Button
                 label="Effacer"
                 severity="danger"
@@ -204,8 +203,8 @@ export function EventListActivityFilter({ groups, value, onChange }: EventListAc
                 icon="pi pi-times"
                 onClick={() => updateSelection(new Set())}
               />
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </OverlayPanel>
     </div>

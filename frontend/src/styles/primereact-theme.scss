@@ -1,0 +1,767 @@
+@import "@styles/variables/index";
+// ==============================================================================
+// Shareable CAF PrimeReact Theme Styles
+// ==============================================================================
+// Reusable styling for React + PrimeReact islands across all Collectives pages.
+// Uses project design tokens and CAF blue palette.
+// ==============================================================================
+
+// ------------------------------------------------------------------------------
+// 1. CSS Custom Properties & Typography
+// ------------------------------------------------------------------------------
+:root,
+body {
+    --primary-color: #{$color-blue-primary-dark};
+    --primary-color-text: #{$color-white};
+    --highlight-bg: #{$color-blue-bg-light};
+    --highlight-text-color: #{$color-blue-primary-dark};
+    --font-family: #{$font-family-primary};
+    --focus-ring: 0 0 0 2px rgba(29, 105, 137, 0.25);
+    --maskbg: rgba(0, 0, 0, 0.4);
+}
+
+.p-component {
+    font-family: $font-family-primary;
+    font-size: $font-size-s;
+    letter-spacing: normal;
+}
+
+// ------------------------------------------------------------------------------
+// 2. Shareable Inputs, Selects & Overlays
+// ------------------------------------------------------------------------------
+
+// Native checkboxes & PrimeReact checkboxes
+input[type="checkbox"] {
+    accent-color: $color-blue-primary-dark;
+}
+
+.p-checkbox {
+    .p-checkbox-box {
+        border: 2px solid $color-gray-border;
+        border-radius: 4px;
+        background: $color-white;
+        transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+
+        .p-checkbox-icon {
+            color: $color-white;
+            font-size: 13px;
+        }
+    }
+
+    &:not(.p-disabled):has(.p-checkbox-input:hover) .p-checkbox-box {
+        border-color: $color-blue-primary-dark;
+    }
+
+    &:not(.p-disabled):has(.p-checkbox-input:focus-visible) .p-checkbox-box,
+    &:not(.p-disabled).p-focus .p-checkbox-box {
+        border-color: $color-blue-primary-dark;
+        box-shadow: 0 0 0 2px rgba($color-blue-primary-dark, 0.25);
+    }
+
+    &.p-highlight .p-checkbox-box,
+    &:not(.p-disabled):has(.p-checkbox-input:hover).p-highlight .p-checkbox-box {
+        border-color: $color-blue-primary-dark;
+        background: $color-blue-primary-dark;
+    }
+}
+
+// Text Inputs
+.p-inputtext {
+    font-family: $font-family-primary;
+    font-size: $font-size-s;
+    color: $color-gray-dark;
+    border: 1px solid $color-gray-light;
+    border-radius: 6px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &:enabled:hover {
+        border-color: $color-blue-primary-dark;
+    }
+
+    &:enabled:focus,
+    &:enabled:focus-visible {
+        border-color: $color-blue-primary-dark;
+        box-shadow: 0 0 0 2px rgba($color-blue-primary-dark, 0.25);
+        outline: none;
+    }
+
+    &::placeholder {
+        color: $color-gray-medium;
+        opacity: 1;
+        font-weight: normal;
+    }
+}
+
+// Dropdown
+.p-dropdown {
+    font-family: $font-family-primary;
+    border: 1px solid $color-gray-light;
+    border-radius: 6px;
+    background: $color-white;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &:not(.p-disabled):hover {
+        border-color: $color-blue-primary-dark;
+    }
+
+    &:not(.p-disabled).p-focus {
+        border-color: $color-blue-primary-dark;
+        box-shadow: 0 0 0 2px rgba($color-blue-primary-dark, 0.25);
+        outline: none;
+    }
+
+    .p-dropdown-label {
+        font-family: $font-family-primary;
+        color: $color-gray-dark;
+
+        &.p-placeholder {
+            color: $color-gray-medium;
+        }
+    }
+
+    .p-dropdown-trigger {
+        color: $color-gray-medium;
+    }
+}
+
+// MultiSelect
+.p-multiselect {
+    font-family: $font-family-primary;
+    border: 1px solid $color-gray-light;
+    background: $color-white;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &:not(.p-disabled):hover {
+        border-color: $color-blue-primary-dark;
+    }
+
+    &:not(.p-disabled).p-focus {
+        border-color: $color-blue-primary-dark;
+        box-shadow: 0 0 0 2px rgba($color-blue-primary-dark, 0.25);
+        outline: none;
+    }
+
+    .p-multiselect-label {
+        font-family: $font-family-primary;
+        color: $color-gray-dark;
+
+        &.p-placeholder {
+            color: $color-gray-medium;
+        }
+    }
+
+    .p-multiselect-trigger {
+        color: $color-gray-medium;
+    }
+}
+
+// AutoComplete
+.p-autocomplete {
+    font-family: $font-family-primary;
+
+    .p-autocomplete-input {
+        font-family: $font-family-primary;
+        font-size: $font-size-s;
+        color: $color-gray-dark;
+        border: 1px solid $color-gray-light;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+        &:enabled:hover {
+            border-color: $color-blue-primary-dark;
+        }
+
+        &:enabled:focus,
+        &:enabled:focus-visible {
+            border-color: $color-blue-primary-dark;
+            box-shadow: 0 0 0 2px rgba($color-blue-primary-dark, 0.25);
+            outline: none;
+        }
+
+        &::placeholder {
+            color: $color-gray-medium;
+            opacity: 1;
+            font-weight: normal;
+        }
+    }
+}
+
+.p-placeholder {
+    color: $color-gray-medium;
+}
+
+// Shared Overlays / Panels (Dropdown, MultiSelect, AutoComplete, OverlayPanel)
+.p-dropdown-panel,
+.p-multiselect-panel,
+.p-autocomplete-panel,
+.p-overlaypanel {
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    background: $color-white;
+    font-family: $font-family-primary;
+
+    .p-dropdown-header,
+    .p-multiselect-header {
+        border-bottom: 1px solid lighten($color-gray-medium, 45%);
+        background: $color-gray-bg-light;
+        padding: 0.5rem 0.75rem;
+
+        .p-multiselect-filter-container .p-inputtext {
+            padding: 0.35rem 0.65rem;
+            font-size: $font-size-xs;
+        }
+
+        .p-multiselect-close {
+            color: $color-gray-medium;
+            &:hover {
+                color: $color-blue-primary-dark;
+                background: $color-blue-bg-light;
+            }
+        }
+    }
+
+    .p-dropdown-items,
+    .p-multiselect-items,
+    .p-autocomplete-items {
+        padding: 0.25rem 0;
+
+        .p-dropdown-item,
+        .p-multiselect-item,
+        .p-autocomplete-item {
+            font-family: $font-family-primary;
+            font-size: $font-size-s;
+            color: $color-gray-dark;
+            padding: 0.45rem 0.75rem;
+            transition: background-color 0.15s ease, color 0.15s ease;
+
+            &:not(.p-highlight):not(.p-disabled):hover {
+                background-color: $color-gray-bg-light;
+                color: $color-gray-dark;
+            }
+
+            &.p-highlight {
+                background-color: $color-blue-bg-light;
+                color: $color-blue-primary-dark;
+                font-weight: $font-weight-medium;
+            }
+        }
+    }
+}
+
+.p-overlaypanel {
+    .p-overlaypanel-content {
+        padding: 1rem;
+    }
+}
+
+// Calendar / DatePicker
+.p-calendar {
+    font-family: $font-family-primary;
+
+    &:not(.p-disabled):hover > .p-inputtext {
+        border-color: $color-blue-primary-dark;
+    }
+
+    &:not(.p-disabled).p-focus > .p-inputtext {
+        border-color: $color-blue-primary-dark;
+        box-shadow: 0 0 0 2px rgba($color-blue-primary-dark, 0.25);
+    }
+}
+
+// When a calendar is nested inside a unified pill container (e.g. .borders)
+.borders .p-calendar {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+
+    > .p-inputtext,
+    > input {
+        border: none !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        outline: none !important;
+
+        &:enabled:focus,
+        &:enabled:focus-visible,
+        &:focus,
+        &:focus-visible {
+            border: none !important;
+            box-shadow: none !important;
+            outline: none !important;
+        }
+    }
+}
+
+.p-datepicker {
+    font-family: $font-family-primary;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    background: $color-white;
+    margin-top: 6px;
+
+    .p-datepicker-header {
+        border-bottom: 1px solid lighten($color-gray-medium, 45%);
+        background: $color-white;
+        color: $color-blue-primary-dark;
+        padding: 0.5rem;
+
+        .p-datepicker-title {
+            font-weight: $font-weight-bold;
+            color: $color-blue-primary-dark;
+        }
+
+        .p-datepicker-prev,
+        .p-datepicker-next {
+            color: $color-gray-medium;
+            border-radius: 50%;
+            &:hover {
+                color: $color-blue-primary-dark;
+                background: $color-blue-bg-light;
+            }
+        }
+    }
+
+    table {
+        th {
+            font-weight: $font-weight-medium;
+            color: $color-gray-medium;
+            font-size: $font-size-xs;
+            padding: 0.4rem;
+        }
+
+        td {
+            padding: 2px;
+
+            > span {
+                border-radius: 50%;
+                font-size: $font-size-s;
+                transition: background-color 0.15s ease, color 0.15s ease;
+
+                &:not(.p-highlight):not(.p-disabled):hover {
+                    background-color: $color-blue-bg-light;
+                    color: $color-blue-primary-dark;
+                }
+
+                &.p-highlight {
+                    background-color: $color-blue-primary-dark;
+                    color: $color-white;
+                    font-weight: $font-weight-bold;
+                }
+            }
+
+            &.p-datepicker-today > span {
+                background-color: $color-blue-bg-light;
+                color: $color-blue-primary-dark;
+
+                &.p-highlight {
+                    background-color: $color-blue-primary-dark;
+                    color: $color-white;
+                }
+            }
+        }
+    }
+}
+
+// ------------------------------------------------------------------------------
+// 3. Shareable Chips & Buttons
+// ------------------------------------------------------------------------------
+.p-chip {
+    background-color: $color-blue-bg-light;
+    color: $color-gray-dark;
+    border-radius: 100px;
+    font-family: $font-family-primary;
+    font-size: $font-size-xs;
+    height: 28px;
+    padding: 0 8px;
+    gap: 4px;
+
+    .p-chip-text {
+        margin: 0;
+        line-height: 1;
+    }
+
+    .p-chip-remove-icon {
+        margin-left: 2px;
+        color: $color-gray-medium;
+        cursor: pointer;
+        transition: color 0.15s ease;
+
+        &:hover {
+            color: $color-red-primary;
+        }
+    }
+}
+
+.p-button {
+    font-family: $font-family-primary;
+    font-size: $font-size-s;
+    background-color: $color-blue-primary-dark;
+    border: 1px solid $color-blue-primary-dark;
+    color: $color-white;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+
+    &:not(:disabled):hover {
+        background-color: darken($color-blue-primary-dark, 5%);
+        border-color: darken($color-blue-primary-dark, 5%);
+    }
+
+    &:focus,
+    &:focus-visible {
+        box-shadow: 0 0 0 2px rgba($color-blue-primary-dark, 0.3);
+        outline: none;
+    }
+
+    &.p-button-outlined {
+        background: transparent;
+        color: $color-blue-primary-dark;
+        border-color: $color-blue-primary-dark;
+
+        &:not(:disabled):hover {
+            background: rgba($color-blue-primary-dark, 0.08);
+            color: $color-blue-primary-dark;
+        }
+    }
+
+    &.p-button-text {
+        background: transparent;
+        color: $color-blue-primary-dark;
+        border-color: transparent;
+
+        &:not(:disabled):hover {
+            background: rgba($color-blue-primary-dark, 0.08);
+            color: $color-blue-primary-dark;
+        }
+    }
+
+    &.p-button-danger {
+        background-color: $color-red-primary;
+        border-color: $color-red-primary;
+        color: $color-white;
+
+        &:not(:disabled):hover {
+            background-color: darken($color-red-primary, 5%);
+            border-color: darken($color-red-primary, 5%);
+        }
+
+        &.p-button-text {
+            background: transparent;
+            color: $color-red-primary;
+            border-color: transparent;
+
+            &:not(:disabled):hover {
+                background: rgba(204, 48, 36, 0.08);
+                color: $color-red-primary;
+            }
+        }
+    }
+
+    &.p-button-rounded {
+        border-radius: 100px;
+    }
+}
+
+// ------------------------------------------------------------------------------
+// 4. Shareable Accordion
+// ------------------------------------------------------------------------------
+.p-accordion {
+    width: 100%;
+
+    .p-accordion-tab,
+    .p-accordionpanel {
+        border: none !important;
+        border-bottom: 1px solid $color-gray-light !important;
+        padding-bottom: 16px;
+        margin-bottom: 0 !important;
+        background: transparent !important;
+    }
+
+    .p-accordion-header,
+    .p-accordionheader {
+        border: none !important;
+        background: transparent !important;
+    }
+
+    .p-accordion-header .p-accordion-header-link,
+    .p-accordionheader {
+        background: transparent !important;
+        border: none !important;
+        border-bottom: none !important;
+        color: $color-gray-dark !important;
+        font-family: $font-family-primary;
+        font-size: 1.125rem;
+        font-weight: 600;
+        padding: 16px 0 !important;
+        border-radius: 0 !important;
+        transition: color 0.15s ease;
+        display: flex;
+        align-items: center;
+
+        .p-accordion-header-text {
+            color: $color-gray-dark;
+            font-family: $font-family-primary;
+            font-size: 1.125rem;
+            font-weight: 600;
+            width: auto;
+        }
+
+        .p-accordion-toggle-icon,
+        svg {
+            color: $color-gray-medium;
+            flex-shrink: 0;
+            width: 14px;
+            height: 14px;
+            transition: color 0.15s ease;
+        }
+
+        &:hover {
+            background: transparent !important;
+            color: $color-gray-dark !important;
+
+            .p-accordion-header-text {
+                color: $color-gray-dark;
+            }
+
+            .p-accordion-toggle-icon,
+            svg {
+                color: $color-gray-dark;
+            }
+        }
+
+        &:focus,
+        &:focus-visible {
+            outline: none;
+            box-shadow: none !important;
+        }
+
+        // Desktop: arrow on left of date with 8px gap
+        @media (min-width: 700px) {
+            flex-direction: row;
+            justify-content: flex-start;
+            gap: 8px;
+
+            .p-accordion-header-text {
+                order: 1;
+            }
+
+            .p-accordion-toggle-icon,
+            svg {
+                order: 0;
+                margin: 0;
+            }
+        }
+
+        // Mobile: date on left, arrow pushed to far right
+        @media (max-width: 699px) {
+            flex-direction: row;
+            justify-content: space-between;
+
+            .p-accordion-header-text {
+                order: 1;
+            }
+
+            .p-accordion-toggle-icon,
+            svg {
+                order: 2;
+                margin-left: auto;
+            }
+        }
+    }
+
+    .p-accordion-content,
+    .p-accordioncontent,
+    .p-accordioncontent-content {
+        border: none !important;
+        background: transparent !important;
+        padding: 8px 0 0 0 !important;
+        color: inherit;
+        border-radius: 0 !important;
+    }
+}
+
+// ------------------------------------------------------------------------------
+// 5. Shareable Paginator
+// ------------------------------------------------------------------------------
+.p-paginator {
+    background: transparent;
+    border: none;
+    padding: 16px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    font-family: $font-family-primary;
+
+    .p-paginator-pages {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+
+        .p-paginator-page {
+            min-width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            color: $color-gray-dark;
+            font-weight: $font-weight-medium;
+            font-size: $font-size-s;
+            transition: background-color 0.2s, color 0.2s;
+
+            &:not(.p-highlight):hover {
+                background: $color-blue-bg-light;
+                color: $color-blue-primary-dark;
+            }
+
+            &.p-highlight {
+                background: $color-blue-primary-light !important;
+                border-color: $color-blue-primary-light !important;
+                color: $color-white !important;
+                font-weight: $font-weight-bold;
+
+                &:hover {
+                    background: $color-blue-primary-dark !important;
+                    border-color: $color-blue-primary-dark !important;
+                    color: $color-white !important;
+                }
+            }
+        }
+    }
+
+    .p-paginator-first,
+    .p-paginator-prev,
+    .p-paginator-next,
+    .p-paginator-last {
+        min-width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: none;
+        color: $color-gray-medium;
+        transition: background-color 0.2s, color 0.2s;
+
+        &:not(.p-disabled):hover {
+            background: $color-blue-bg-light;
+            color: $color-blue-primary-dark;
+        }
+    }
+
+    .p-dropdown {
+        height: 36px;
+        border-radius: 100px;
+        border: 1px solid $color-gray-light;
+        margin-left: 16px;
+        display: inline-flex;
+        align-items: center;
+
+        .p-dropdown-label {
+            padding: 0 8px 0 12px;
+            font-size: $font-size-s;
+            line-height: 34px;
+        }
+    }
+}
+
+// ------------------------------------------------------------------------------
+// 6. Shareable DataTable
+// ------------------------------------------------------------------------------
+.p-datatable {
+    font-family: $font-family-primary;
+
+    .p-datatable-header {
+        background: transparent;
+        border: none;
+        padding: 10px 0;
+    }
+
+    .p-datatable-thead > tr > th {
+        background: $color-blue-bg-light;
+        color: $color-blue-primary-dark;
+        font-weight: $font-weight-bold;
+        font-size: $font-size-s;
+        border-bottom: 2px solid $color-blue-primary-dark;
+        border-top: none;
+        border-left: none;
+        border-right: none;
+        padding: 10px 14px;
+        transition: background-color 0.15s, color 0.15s;
+
+        .p-column-title {
+            font-weight: $font-weight-bold;
+        }
+
+        .p-sortable-column-icon {
+            color: $color-blue-primary-dark;
+            margin-left: 6px;
+        }
+
+        &.p-highlight {
+            background: darken($color-blue-bg-light, 4%);
+            color: $color-blue-primary-dark;
+        }
+
+        &:focus-visible {
+            outline: 2px solid $color-blue-primary-dark;
+            outline-offset: -2px;
+        }
+    }
+
+    .p-datatable-tbody > tr {
+        color: $color-gray-dark;
+        border-bottom: 1px solid lighten($color-gray-medium, 45%);
+        background: $color-white;
+        transition: background-color 0.15s;
+
+        > td {
+            padding: 10px 14px;
+            border: none;
+            font-size: $font-size-s;
+        }
+
+        &:hover,
+        &.p-selectable-row:not(.p-highlight):hover {
+            background-color: rgba($color-blue-bg-light, 0.5);
+        }
+
+        &.p-highlight {
+            background-color: $color-blue-bg-light;
+            color: $color-blue-primary-dark;
+        }
+    }
+
+    &.p-datatable-striped .p-datatable-tbody > tr:nth-child(even) {
+        background-color: rgba($color-gray-bg-light, 0.7);
+
+        &:hover {
+            background-color: rgba($color-blue-bg-light, 0.5);
+        }
+    }
+
+    .p-column-filter-row {
+        .p-column-filter-element {
+            .p-inputtext {
+                padding: 4px 8px;
+                font-size: $font-size-xs;
+                border-radius: 4px;
+                border: 1px solid $color-gray-light;
+            }
+        }
+
+        .p-column-filter-menu-button,
+        .p-column-filter-clear-button {
+            color: $color-blue-primary-dark;
+            width: 28px;
+            height: 28px;
+
+            &:hover {
+                background: $color-blue-bg-light;
+            }
+        }
+    }
+
+    .p-rowgroup-header {
+        background-color: $color-gray-bg-light;
+        font-weight: $font-weight-bold;
+        color: $color-blue-primary-dark;
+    }
+}
