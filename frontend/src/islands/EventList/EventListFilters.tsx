@@ -52,10 +52,24 @@ export function EventListFilters({
     filters.title,
   ]);
 
-  const activeFilterCount = useMemo(
-    () => advancedFilterCount + (isSet(filters.activities) ? 1 : 0),
-    [advancedFilterCount, filters.activities],
-  );
+  const activeFilterCount = useMemo(() => {
+    const filterValues = [
+      filters.activities,
+      filters.eventTypes,
+      filters.eventTags,
+      filters.date,
+      filters.title,
+      filters.leader,
+    ];
+    return filterValues.filter(isSet).length;
+  }, [
+    filters.activities,
+    filters.date,
+    filters.eventTags,
+    filters.eventTypes,
+    filters.leader,
+    filters.title,
+  ]);
 
   const [displayMoreFilters, setDisplayMoreFilters] = useState<boolean>(advancedFilterCount > 0);
 
@@ -182,15 +196,14 @@ export function EventListFilters({
             aria-pressed={filters.displayCancelled}
           >
             Sorties annulées :{" "}
-            {filters.displayCancelled ? (
-              <span className="icon-button display-for-on">
+            <span className="cancelled-status-container">
+              <span className="icon-button display-for-on" aria-hidden={!filters.displayCancelled}>
                 affichées <img src="/static/img/icon/ionicon/eye.svg" alt="" />
               </span>
-            ) : (
-              <span className="icon-button display-for-off">
+              <span className="icon-button display-for-off" aria-hidden={filters.displayCancelled}>
                 cachées <img src="/static/img/icon/ionicon/eye-off.svg" alt="" />
               </span>
-            )}
+            </span>
           </button>
         </>
       )}

@@ -101,8 +101,19 @@ describe("EventListIsland", () => {
     const toggleButton = screen.getByText("+ Plus de filtres");
     fireEvent.click(toggleButton);
 
+    expect(screen.queryByText("+ Plus de filtres")).toBeNull();
+    expect(screen.getByText(/Moins de filtres/)).toBeDefined();
     expect(screen.getByPlaceholderText("Titre")).toBeDefined();
-    expect(screen.getByText(/Sorties annulées/)).toBeDefined();
+
+    const cancelledBtn = screen.getByRole("button", { name: "Sorties annulées : cachées" });
+    expect(cancelledBtn).toBeDefined();
+    expect(screen.queryByText("Tout effacer")).toBeNull();
+
+    fireEvent.click(cancelledBtn);
+
+    expect(screen.getByRole("button", { name: "Sorties annulées : affichées" })).toBeDefined();
+    // Toggling cancelled events visibility must not mount "Tout effacer" (which causes inputs to resize)
+    expect(screen.queryByText("Tout effacer")).toBeNull();
   });
 
   it("hides the activity filter hint when an activity is selected", async () => {

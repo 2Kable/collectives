@@ -85,21 +85,22 @@ $button-height:40px;
 
         &--photo {
             flex-shrink: 0;
+            width: $collectives-list-row-height * 1.5;
+            min-height: $collectives-list-row-height;
+            align-self: stretch;
 
-            @media screen and (max-width: 700px) {
-                width: 100% !important;
-                height: 70px;
-                min-height: auto;
-            }
             @media screen and (max-width: 1000px) {
                 width: $collectives-list-row-height;
             }
             @media screen and (max-width: 800px) {
                 width: $collectives-list-row-height * 0.75;
             }
-            width: $collectives-list-row-height * 1.5;
-            min-height: $collectives-list-row-height;
-            align-self: stretch;
+            @media screen and (max-width: 700px) {
+                width: 100% !important;
+                height: 70px !important;
+                min-height: 70px !important;
+                max-height: 70px !important;
+            }
 
             img {
                 width: 100%;
@@ -157,9 +158,15 @@ $button-height:40px;
                     align-items: center;
                     text-align: center;
                     white-space: normal;
-                    margin: 0;
+                    margin: 0 0 $padding-vertical-xs 0;
                     font-size: $font-size-m;
                     text-align: center;
+
+                    > div {
+                        width: 100%;
+                        display: flex;
+                        justify-content: center;
+                    }
                 }
             }
 
@@ -181,7 +188,9 @@ $button-height:40px;
                     @media screen and (max-width: 700px) {
                         font-size: $font-size-xs;
                         float: none;
-                        display: block;
+                        display: flex;
+                        justify-content: center;
+                        width: 100%;
                         white-space: wrap;
                     }
                 }
@@ -207,8 +216,12 @@ $button-height:40px;
                 flex-direction: row;
 
                 @media screen and (max-width: 700px) {
-                    display: block;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
                     text-align: center;
+                    gap: $padding-vertical-xs;
+                    margin: $padding-vertical-xs 0;
                 }
             }
 
@@ -226,6 +239,7 @@ $button-height:40px;
                     align-items: start;
                     width: 100%;
                     margin-bottom: 0;
+                    margin-top: $padding-vertical-xs;
                 }
             }
 
@@ -234,6 +248,9 @@ $button-height:40px;
                 @media screen and (max-width: 700px) {
                     font-size: $font-size-xs;
                     margin: 0;
+                    display: flex;
+                    justify-content: center;
+                    width: 100%;
                 }
             }
             &-activity-type {
@@ -332,7 +349,7 @@ $button-height:40px;
 }
 
 .collectives-list-filters {
-    padding: $padding-default;
+    padding: 0;
     text-align: center;
     display: flex;
     gap: 10px;
@@ -345,8 +362,6 @@ $button-height:40px;
     }
 
     @media screen and (max-width: 680px) {
-        padding: $padding-xs;
-
         &::after {
             /* Do not fill last line if unnecessary */
             display: none;
@@ -386,6 +401,48 @@ $button-height:40px;
             font-size: $font-size-xs;
             vertical-align: middle;
             margin-right: 4px;
+        }
+    }
+
+    #cancelled {
+        .cancelled-status-container {
+            display: inline-grid;
+            grid-template-columns: 1fr;
+            vertical-align: middle;
+
+            .icon-button {
+                grid-area: 1 / 1;
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                white-space: nowrap;
+            }
+
+            .display-for-on {
+                visibility: hidden;
+                font-weight: 500;
+            }
+
+            .display-for-off {
+                visibility: visible;
+                font-weight: normal;
+            }
+        }
+
+        &.enabled {
+            font-weight: normal;
+            background: $color-blue-bg-light;
+            border-color: $color-blue-primary-dark;
+
+            .cancelled-status-container {
+                .display-for-on {
+                    visibility: visible;
+                }
+
+                .display-for-off {
+                    visibility: hidden;
+                }
+            }
         }
     }
 
@@ -457,7 +514,7 @@ $button-height:40px;
                 color: inherit !important;
 
                 &::placeholder {
-                    color: $color-gray-medium;
+                    color: $color-placeholder;
                     opacity: 1;
                     font-weight: normal;
                 }
@@ -483,7 +540,7 @@ $button-height:40px;
             outline: none;
 
             &::placeholder {
-                color: $color-gray-medium;
+                color: $color-placeholder;
                 opacity: 1;
                 font-weight: normal;
             }
@@ -506,7 +563,7 @@ $button-height:40px;
             padding: 1px 12px;
 
             &::placeholder {
-                color: $color-gray-medium;
+                color: $color-placeholder;
                 opacity: 1;
                 font-weight: normal;
             }
@@ -575,7 +632,7 @@ $button-height:40px;
                 color: $color-gray-dark;
 
                 &.p-placeholder {
-                    color: $color-gray-medium;
+                    color: $color-placeholder;
                 }
             }
             .p-chip-image {
@@ -586,7 +643,7 @@ $button-height:40px;
         .p-multiselect-trigger {
             width: auto;
             padding: 0 0 0 8px;
-            color: $color-gray-medium;
+            color: $color-placeholder;
             background: transparent;
         }
     }
@@ -632,7 +689,7 @@ $button-height:40px;
             .p-placeholder,
             &.is-placeholder,
             .is-placeholder {
-                color: $color-gray-medium;
+                color: $color-placeholder;
             }
 
             .p-chip-image {
@@ -641,7 +698,7 @@ $button-height:40px;
         }
 
         .pi-chevron-down {
-            color: $color-gray-medium;
+            color: $color-placeholder;
             font-size: $font-size-xs;
             margin-left: auto;
         }
