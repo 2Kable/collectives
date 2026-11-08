@@ -1,4 +1,5 @@
 import { getEvents } from "@/api/events";
+import { EventDateScrubber } from "@/islands/EventList/EventDateScrubber";
 import { normalizeSavedActivities } from "@/islands/EventList/EventListActivityFilter";
 import { EventListFilters, pruneUnknownOptions } from "@/islands/EventList/EventListFilters";
 import { EventListItem } from "@/islands/EventList/EventListItem";
@@ -73,19 +74,19 @@ function loadInitialFilters(props: EventListProps): EventFiltersState {
 export default function EventListIsland(props: EventListProps) {
   const startingPage = useMemo(() => getStartingPageFromHash(), []);
   const eventListRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
-  const [eventParams, setEventParams] = useState({
-    page: startingPage,
-    pageSize: DEFAULT_PAGE_SIZE,
-    first: (startingPage - 1) * DEFAULT_PAGE_SIZE,
-  });
+  const [currentPage, setCurrentPage] = useState<number>(startingPage);
+  const [events, setEvents] = useState<EventItem[]>([]);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [loadingMore, setLoadingMore] = useState<boolean>(false);
+  const [eventCount, setEventCount] = useState<number>(0);
+  const [activeDateKey, setActiveDateKey] = useState<string | null>(null);
 
   const [eventFilters, setEventFilters] = useState<EventFiltersState>(() =>
     loadInitialFilters(props),
   );
-  const [loading, setLoading] = useState<boolean>(true);
-  const [groupedEvents, setGroupedEvents] = useState<Record<string, EventItem[]>>({});
-  const [eventCount, setEventCount] = useState<number>(0);
 
   const gotoEvents = useCallback(() => {
     eventListRef.current?.scrollIntoView?.({ behavior: "smooth" });
@@ -106,17 +107,25 @@ export default function EventListIsland(props: EventListProps) {
     }
   }, [eventFilters]);
 
+  // Initial load and filter changes: reset and fetch page 1
   useEffect(() => {
     let active = true;
     setLoading(true);
+    setCurrentPage(1);
 
-    getEvents({ page: eventParams.page, pageSize: eventParams.pageSize }, eventFilters)
+    getEvents({ page: 1, pageSize: DEFAULT_PAGE_SIZE }, eventFilters)
       .then((response) => {
         if (!active) {
           return;
         }
-        setGroupedEvents(groupEventsByDate(response.data || []));
-        setEventCount(response.total ?? (response.last_page || 0) * eventParams.pageSize);
+        const loaded = response.data || [];
+        setEvents(loaded);
+        const total = response.total ?? (response.last_page || 1) * DEFAULT_PAGE_SIZE;
+        setEventCount(total);
+        setHasMore(
+          loaded.length > 0 &&
+            (response.total ? loaded.length < response.total : (response.last_page || 1) > 1),
+        );
       })
       .finally(() => {
         if (active) {
@@ -127,23 +136,150 @@ export default function EventListIsland(props: EventListProps) {
     return () => {
       active = false;
     };
-  }, [eventFilters, eventParams.page, eventParams.pageSize]);
+  }, [eventFilters]);
+
+  // Infinite scroll loader: appends next page
+  const loadMore = useCallback(() => {
+    if (loading || loadingMore || !hasMore) {
+      return;
+    }
+    const nextPage = currentPage + 1;
+    setLoadingMore(true);
+
+    getEvents({ page: nextPage, pageSize: DEFAULT_PAGE_SIZE }, eventFilters)
+      .then((response) => {
+        const newItems = response.data || [];
+        if (newItems.length === 0) {
+          setHasMore(false);
+          return;
+        }
+        setEvents((prev) => {
+          const merged = [...prev, ...newItems];
+          const total = response.total ?? (response.last_page || 1) * DEFAULT_PAGE_SIZE;
+          setHasMore(merged.length < total);
+          return merged;
+        });
+        setCurrentPage(nextPage);
+        if (typeof window !== "undefined") {
+          window.history.replaceState(null, "", `#${nextPage}`);
+        }
+      })
+      .catch(() => {
+        setHasMore(false);
+      })
+      .finally(() => {
+        setLoadingMore(false);
+      });
+  }, [currentPage, eventFilters, hasMore, loading, loadingMore]);
+
+  // Sentinel IntersectionObserver for infinite scrolling
+  useEffect(() => {
+    if (
+      !hasMore ||
+      loading ||
+      loadingMore ||
+      typeof window === "undefined" ||
+      !("IntersectionObserver" in window)
+    ) {
+      return;
+    }
+    const sentinel = sentinelRef.current;
+    if (!sentinel) {
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          loadMore();
+        }
+      },
+      { rootMargin: "300px" },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore, loadMore]);
+
+  const groupedEvents = useMemo(() => groupEventsByDate(events), [events]);
+  const dateKeys = useMemo(() => Object.keys(groupedEvents), [groupedEvents]);
+  const allPanelIndices = useMemo(() => dateKeys.map((_, index) => index), [dateKeys]);
+
+  const scrubberDates = useMemo(() => {
+    return dateKeys.map((key) => ({
+      key,
+      label: key,
+      count: groupedEvents[key]?.length || 0,
+    }));
+  }, [dateKeys, groupedEvents]);
+
+  // Track currently visible date section for the scrubber
+  useEffect(() => {
+    if (
+      dateKeys.length === 0 ||
+      typeof window === "undefined" ||
+      !("IntersectionObserver" in window)
+    ) {
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const key = entry.target.getAttribute("data-date-key");
+            if (key) {
+              setActiveDateKey(key);
+            }
+          }
+        }
+      },
+      {
+        rootMargin: "-120px 0px -70% 0px",
+        threshold: 0,
+      },
+    );
+
+    dateKeys.forEach((key, index) => {
+      const el = document.getElementById(`date-section-${index}`);
+      if (el) {
+        el.setAttribute("data-date-key", key);
+        observer.observe(el);
+      }
+    });
+
+    return () => observer.disconnect();
+  }, [dateKeys]);
+
+  const handleScrubToDate = useCallback((_key: string, index: number) => {
+    const el = document.getElementById(`date-section-${index}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, []);
 
   const handlePaginatorChange = (pageState: PaginatorPageChangeEvent) => {
     const pageNumber = pageState.page + 1;
-    setEventParams({
-      page: pageNumber,
-      pageSize: pageState.rows,
-      first: pageState.first,
-    });
+    setCurrentPage(pageNumber);
+    setLoading(true);
     if (typeof window !== "undefined") {
       window.history.pushState(null, "", `#${pageNumber}`);
     }
-    gotoEvents();
+    getEvents({ page: pageNumber, pageSize: pageState.rows }, eventFilters)
+      .then((response) => {
+        const loaded = response.data || [];
+        setEvents(loaded);
+        const total = response.total ?? (response.last_page || 1) * pageState.rows;
+        setEventCount(total);
+        setHasMore(
+          loaded.length > 0 &&
+            (response.total
+              ? loaded.length < response.total
+              : (response.last_page || 1) > pageNumber),
+        );
+      })
+      .finally(() => {
+        setLoading(false);
+        gotoEvents();
+      });
   };
-
-  const dateKeys = Object.keys(groupedEvents);
-  const allPanelIndices = useMemo(() => dateKeys.map((_, index) => index), [dateKeys]);
 
   return (
     <>
@@ -175,12 +311,20 @@ export default function EventListIsland(props: EventListProps) {
         )}
 
         <div className="collectives-list">
-          <EventListFilters
-            filters={eventFilters}
-            activityGroups={props.activityGroups}
-            eventTypes={props.eventTypes}
-            eventTags={props.eventTags}
-            onFiltersChange={setEventFilters}
+          <div className="collectives-list-filters-sticky-wrapper">
+            <EventListFilters
+              filters={eventFilters}
+              activityGroups={props.activityGroups}
+              eventTypes={props.eventTypes}
+              eventTags={props.eventTags}
+              onFiltersChange={setEventFilters}
+            />
+          </div>
+
+          <EventDateScrubber
+            dates={scrubberDates}
+            activeDateKey={activeDateKey}
+            onScrubToDate={handleScrubToDate}
           />
 
           {loading ? (
@@ -190,34 +334,58 @@ export default function EventListIsland(props: EventListProps) {
               ))}
             </>
           ) : (
-            <Accordion multiple activeIndex={allPanelIndices}>
-              {dateKeys.map((date) => (
-                <AccordionTab
-                  key={date}
-                  header={date}
-                  pt={{
-                    headerAction: { className: "p-accordionheader" },
-                  }}
-                >
-                  {groupedEvents[date].map((eventItem) => (
-                    <EventListItem
-                      key={eventItem.id}
-                      eventItem={eventItem}
-                      eventStatusLabels={props.eventStatusLabels}
-                    />
-                  ))}
-                </AccordionTab>
-              ))}
-            </Accordion>
-          )}
+            <>
+              <Accordion multiple activeIndex={allPanelIndices}>
+                {dateKeys.map((date, index) => (
+                  <AccordionTab
+                    key={date}
+                    header={date}
+                    pt={{
+                      headerAction: {
+                        id: `date-section-${index}`,
+                        className: "p-accordionheader",
+                        style: { scrollMarginTop: "140px" },
+                      },
+                    }}
+                  >
+                    {groupedEvents[date].map((eventItem) => (
+                      <EventListItem
+                        key={eventItem.id}
+                        eventItem={eventItem}
+                        eventStatusLabels={props.eventStatusLabels}
+                      />
+                    ))}
+                  </AccordionTab>
+                ))}
+              </Accordion>
 
-          <Paginator
-            first={eventParams.first}
-            rows={eventParams.pageSize}
-            totalRecords={eventCount}
-            rowsPerPageOptions={[25, 50, 100]}
-            onPageChange={handlePaginatorChange}
-          />
+              {/* Infinite Scroll Sentinel */}
+              <div ref={sentinelRef} className="infinite-scroll-sentinel" aria-hidden="true" />
+
+              {loadingMore && (
+                <div className="infinite-scroll-loading">
+                  <EventListSkeleton />
+                </div>
+              )}
+
+              {!hasMore && events.length > 0 && (
+                <div className="infinite-scroll-end">
+                  <span>
+                    {events.length} collective{events.length > 1 ? "s" : ""} affichée
+                    {events.length > 1 ? "s" : ""}
+                  </span>
+                </div>
+              )}
+
+              <Paginator
+                first={(currentPage - 1) * DEFAULT_PAGE_SIZE}
+                rows={DEFAULT_PAGE_SIZE}
+                totalRecords={eventCount}
+                rowsPerPageOptions={[25, 50, 100]}
+                onPageChange={handlePaginatorChange}
+              />
+            </>
+          )}
         </div>
       </div>
     </>

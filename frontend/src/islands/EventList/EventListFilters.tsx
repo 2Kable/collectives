@@ -4,6 +4,7 @@ import { EventListActivityFilter } from "@/islands/EventList/EventListActivityFi
 import type { ActivityGroup, EventFiltersState, NamedOption } from "@/types/event";
 import { AutoComplete, type AutoCompleteCompleteEvent } from "primereact/autocomplete";
 import { Calendar } from "primereact/calendar";
+import { Chip } from "primereact/chip";
 import { useMemo, useState } from "react";
 
 const isSet = (value: unknown): boolean =>
@@ -204,6 +205,72 @@ export function EventListFilters({
           <i className="pi pi-times" />
           Tout effacer<span className="visually-hidden"> les filtres</span>
         </button>
+      )}
+
+      {advancedFilterCount > 0 && (
+        <div className="active-filters-callout" aria-label="Filtres actifs">
+          <span className="active-filters-callout-label">Filtres actifs :</span>
+          {filters.title && (
+            <Chip
+              label={`Titre: ${filters.title}`}
+              removable
+              onRemove={() => {
+                updateFilters({ title: "" });
+                return false;
+              }}
+            />
+          )}
+          {filters.leader && (
+            <Chip
+              label={`Encadrant: ${filters.leader}`}
+              removable
+              onRemove={() => {
+                updateFilters({ leader: "" });
+                return false;
+              }}
+            />
+          )}
+          {filters.date && (
+            <Chip
+              label={`Depuis: ${filters.date.toLocaleDateString("fr-FR")}`}
+              removable
+              onRemove={() => {
+                updateFilters({ date: null });
+                return false;
+              }}
+            />
+          )}
+          {filters.eventTypes.length > 0 && (
+            <Chip
+              label={`Types (${filters.eventTypes.length})`}
+              removable
+              onRemove={() => {
+                updateFilters({ eventTypes: [] });
+                return false;
+              }}
+            />
+          )}
+          {filters.eventTags.length > 0 && (
+            <Chip
+              label={`Labels (${filters.eventTags.length})`}
+              removable
+              onRemove={() => {
+                updateFilters({ eventTags: [] });
+                return false;
+              }}
+            />
+          )}
+          {filters.displayCancelled && (
+            <Chip
+              label="Sorties annulées incluses"
+              removable
+              onRemove={() => {
+                updateFilters({ displayCancelled: false });
+                return false;
+              }}
+            />
+          )}
+        </div>
       )}
     </div>
   );
