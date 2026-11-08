@@ -47,6 +47,11 @@ check_doc_coverage_routes () {
  cd $PWD && uv run docstr-coverage collectives/routes
 }
 
+run_frontend () {
+ echo " ***** RUN Frontend Lint, Tests and Build *****"
+ cd $PWD && npm --prefix frontend run lint && npm --prefix frontend run test && npm --prefix frontend run build
+}
+
 # catch first arguments with $1
 case "$1" in
  -b|--black)
@@ -57,6 +62,9 @@ case "$1" in
   ;;
  -t|--tests)
   exec_tests
+  ;;
+ -fe|--frontend)
+  run_frontend
   ;;
  -h|--html)
   build_html_doc
@@ -80,6 +88,7 @@ case "$1" in
   echo " ***** RUN ALL JOBS *****"
   run_black
   run_linter
+  run_frontend
   exec_tests
   check_doc_coverage_apis
   check_doc_coverage_models
@@ -89,7 +98,7 @@ case "$1" in
   build_html_doc
   ;;
   *)
-  echo "Usage: (-b|--black -l|--linter -t|--tests -h|--html -dc|--doc-coverage -dm|--doc-coverage-models -du|--doc-coverage-utils -da|--doc-coverage-api -dr|--doc-coverage-routes -a|--all)"
+  echo "Usage: (-b|--black -l|--linter -t|--tests -fe|--frontend -h|--html -dc|--doc-coverage -dm|--doc-coverage-models -du|--doc-coverage-utils -da|--doc-coverage-api -dr|--doc-coverage-routes -a|--all)"
   ;;
 esac
 

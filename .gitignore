@@ -27,3 +27,8 @@ doc/build
 
 /logs/
 .vs/
+/frontend/node_modules/
+/frontend/coverage/
+/frontend/*.tsbuildinfo
+
+

@@ -1,3 +1,11 @@
+FROM node:22-slim AS frontend-builder
+
+WORKDIR /build/frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build
+
 FROM python:3.13
 
 LABEL org.opencontainers.image.authors="CAF Annecy <digital@cafannecy.fr"
@@ -15,6 +23,7 @@ COPY migrations /app/migrations/
 COPY config.py pyproject.toml .python-version uv.lock README.md /app/
 
 COPY collectives /app/collectives/
+COPY --from=frontend-builder /build/collectives/static/dist/vite /app/collectives/static/dist/vite
 COPY deployment/docker/logging.cfg /app/
 COPY metadata.jso[n] /app/
 
