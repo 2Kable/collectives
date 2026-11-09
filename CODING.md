@@ -140,8 +140,10 @@ here in the same PR.
  * **TEST2** Reuse the fixtures from `tests/fixtures/`. Never combine two
    `*_client` fixtures in one test: use `client` and
    `fixtures.client.login()` to switch users.
- * **TEST3** Locally, run the test files related to the change
-   (`uv run pytest tests/<file>`) rather than the whole suite.
+ * **TEST3** Run only the tests related to the change:
+   - For backend changes: run the relevant test file (`uv run pytest tests/<file>`) rather than the whole suite.
+   - For frontend changes: run frontend tests (`npm --prefix frontend run test`).
+   Do not run backend tests for frontend-only work, and vice versa.
 
 ## Commit
  * **COM1** Message in English.

@@ -7,6 +7,7 @@ import { createRoot } from "react-dom/client";
 
 import "primeicons/primeicons.css";
 import "primereact/resources/themes/lara-light-blue/theme.css";
+import "@/styles/primereact-theme.scss";
 
 const ISLAND_SELECTOR = "[data-react-island]";
 const PROPS_SELECTOR = "script[data-island-props]";

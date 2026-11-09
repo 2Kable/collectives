@@ -1,0 +1,219 @@
+name: Deploy PR Demo to Google Cloud
+
+on:
+  # Automatically run on pull requests opened/updated
+  pull_request:
+    types: [opened, synchronize, reopened]
+  # Allow manual trigger on-demand with a specified PR number
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Pull Request number to build and deploy demo for'
+        required: true
+        type: string
+
+# Restrict concurrency per PR: cancelling outdated in-progress runs when new commits arrive
+concurrency:
+  group: demo-pr-${{ github.event.pull_request.number || inputs.pr_number || github.ref }}
+  cancel-in-progress: true
+
+# Restrict workflow permissions following the principle of least privilege
+permissions:
+  contents: read           # Checkout code
+  id-token: write          # Required for GCP Workload Identity Federation (OIDC)
+  pull-requests: write     # Required to post/update Cloud Run demo URL comment on the PR
+  issues: write            # Fallback permission for PR comment APIs
+
+jobs:
+  deploy_demo:
+    name: Build & Deploy Demo to Cloud Run
+    runs-on: ubuntu-latest
+
+    # =========================================================================
+    # STRICT SECURITY GATES:
+    # 1. github.repository == '2Kable/collectives':
+    #    Guarantees this workflow ONLY executes in 2Kable's repository, never on
+    #    unauthorized third-party forks or upstream Club-Alpin-Annecy/collectives.
+    # 2. github.actor == '2Kable':
+    #    Guarantees the triggering actor is exclusively 2Kable.
+    # 3. For pull_request events:
+    #    - github.event.pull_request.user.login == '2Kable':
+    #      Guarantees the PR author is 2Kable (preventing PRs from external users).
+    #    - github.event.pull_request.head.repo.full_name == github.repository:
+    #      Guarantees the PR branch originates directly within 2Kable/collectives
+    #      (same repo) and NOT from a fork repository, preventing malicious fork code
+    #      from accessing GCP credentials or triggering rogue deployments.
+    # 4. For workflow_dispatch events:
+    #    Requires 2Kable triggering directly on 2Kable/collectives.
+    # =========================================================================
+    if: >-
+      github.repository == '2Kable/collectives' &&
+      github.actor == '2Kable' &&
+      (
+        (github.event_name == 'pull_request' &&
+         github.event.pull_request.user.login == '2Kable' &&
+         github.event.pull_request.head.repo.full_name == github.repository) ||
+        github.event_name == 'workflow_dispatch'
+      )
+
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+      GCP_REGION: ${{ vars.GCP_REGION || 'europe-west1' }}
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      SERVICE_NAME: collectives-demo-pr-${{ github.event.pull_request.number || inputs.pr_number }}
+      IMAGE_BASE: ${{ vars.GCP_REGION || 'europe-west1' }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/collectives/demo-pr-${{ github.event.pull_request.number || inputs.pr_number }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          # In pull_request events, checkout the head commit of the PR.
+          # In workflow_dispatch, checkout the PR head ref.
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || format('refs/pull/{0}/head', inputs.pr_number) }}
+
+      - name: Validate GCP Configuration
+        run: |
+          if [ -z "${{ vars.GCP_PROJECT_ID }}" ]; then
+            echo "::error::Repository variable GCP_PROJECT_ID is not configured in Settings -> Secrets and variables -> Actions -> Variables."
+            exit 1
+          fi
+          if [ -z "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}" ] && [ -z "${{ secrets.GCP_CREDENTIALS_JSON }}" ] && [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
+            echo "::error::Neither GCP_WORKLOAD_IDENTITY_PROVIDER nor GCP_CREDENTIALS_JSON/GCP_SA_KEY is set in Secrets."
+            exit 1
+          fi
+
+      # -----------------------------------------------------------------------
+      # Google Cloud Authentication
+      # Preferred: Workload Identity Federation (WIF) - Keyless & secure
+      # Fallback: Service Account Key JSON
+      # -----------------------------------------------------------------------
+      - name: Authenticate to Google Cloud (Workload Identity Federation)
+        id: auth-wif
+        env:
+          WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+        if: env.WIF_PROVIDER != ''
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Authenticate to Google Cloud (Service Account Key Fallback)
+        id: auth-json
+        env:
+          WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          SA_KEY: ${{ secrets.GCP_CREDENTIALS_JSON || secrets.GCP_SA_KEY }}
+        if: env.WIF_PROVIDER == '' && env.SA_KEY != ''
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS_JSON || secrets.GCP_SA_KEY }}
+
+      # -----------------------------------------------------------------------
+      # Set up Google Cloud SDK & Artifact Registry Docker helper
+      # -----------------------------------------------------------------------
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+
+      - name: Configure Docker for Google Artifact Registry
+        run: |
+          gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+
+      # -----------------------------------------------------------------------
+      # Build Docker image using Buildx
+      # -----------------------------------------------------------------------
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_BASE }}
+
+      - name: Write Docker metadata file for application version
+        run: |
+          printf '%s' '${{ steps.meta.outputs.json }}' > metadata.json
+
+      - name: Build and push Docker image
+        id: build-push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/collectives/demo-pr-${{ github.event.pull_request.number || inputs.pr_number }}:${{ github.sha }}
+            ${{ env.IMAGE_BASE }}:latest
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # -----------------------------------------------------------------------
+      # Prune older untagged/superseded container images for this PR
+      # Keeps only the newest 2 images in this package to save storage space
+      # -----------------------------------------------------------------------
+      - name: Prune older PR container images
+        run: |
+          echo "Pruning older container images for PR #${PR_NUMBER}..."
+          OLD_DIGESTS=$(gcloud artifacts docker images list "${IMAGE_BASE}" \
+            --sort-by="~CREATE_TIME" \
+            --format="get(DIGEST)" 2>/dev/null | tail -n +3 || true)
+
+          for DIGEST in $OLD_DIGESTS; do
+            if [ -n "$DIGEST" ]; then
+              echo "Pruning older digest: ${IMAGE_BASE}@${DIGEST}..."
+              gcloud artifacts docker images delete "${IMAGE_BASE}@${DIGEST}" --delete-tags --quiet || true
+            fi
+          done
+
+      # -----------------------------------------------------------------------
+      # Deploy to Google Cloud Run
+      # Waitress server listens on port 5000 (specified in entrypoint.sh)
+      # -----------------------------------------------------------------------
+      - name: Deploy demo service to Google Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          image: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/collectives/demo-pr-${{ github.event.pull_request.number || inputs.pr_number }}:${{ github.sha }}
+          region: ${{ env.GCP_REGION }}
+          flags: '--port=5000 --allow-unauthenticated --min-instances=0 --max-instances=2 --set-env-vars=POPULATE_TEST_DATA=1'
+
+      # -----------------------------------------------------------------------
+      # Post/Update Demo URL Comment on the Pull Request
+      # -----------------------------------------------------------------------
+      - name: Post or update PR demo comment
+        if: ${{ success() && env.PR_NUMBER != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEMO_URL: ${{ steps.deploy.outputs.url }}
+          DEPLOY_TAG: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/collectives/demo-pr-${{ github.event.pull_request.number || inputs.pr_number }}:${{ github.sha }}
+        run: |
+          COMMENT_MARKER="<!-- collectives-demo-pr-deploy-marker -->"
+          COMMENT_BODY="${COMMENT_MARKER}
+          ### 🚀 Pull Request Demo Deployed
+
+          | Property | Details |
+          | :--- | :--- |
+          | **Demo URL** | [${DEMO_URL}](${DEMO_URL}) |
+          | **Cloud Run Service** | \`${SERVICE_NAME}\` |
+          | **Region** | \`${GCP_REGION}\` |
+          | **Commit** | \`${{ github.sha }}\` |
+          | **Artifact Registry Image** | \`${DEPLOY_TAG}\` |
+
+          > [!NOTE]
+          > Deployed by \`.github/workflows/deploy_demo_pr.yml\`. Pushing new commits to this PR will automatically update the demo deployment."
+
+          echo "Checking for existing deployment comment on PR #${PR_NUMBER}..."
+          EXISTING_COMMENT_ID=$(gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" \
+            --jq ".[] | select(.body | contains(\"${COMMENT_MARKER}\")) | .id" | head -n 1)
+
+          if [ -n "$EXISTING_COMMENT_ID" ]; then
+            echo "Updating existing comment #${EXISTING_COMMENT_ID}..."
+            gh api --method PATCH "repos/${{ github.repository }}/issues/comments/${EXISTING_COMMENT_ID}" \
+              -f body="$COMMENT_BODY"
+          else
+            echo "Posting new comment on PR #${PR_NUMBER}..."
+            gh pr comment "${PR_NUMBER}" --repo "${{ github.repository }}" --body "$COMMENT_BODY"
+          fi
