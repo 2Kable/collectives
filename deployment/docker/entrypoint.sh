@@ -13,4 +13,9 @@ if ! uv run --no-dev flask db upgrade; then
     fi
 fi
 
+if [ "$POPULATE_TEST_DATA" = "1" ] && [ -f "etc/test_set.py" ]; then
+    echo "POPULATE_TEST_DATA=1 detected: generating demo test dataset..."
+    uv run --no-dev python etc/test_set.py || echo "Warning: failed to generate test data, continuing..."
+fi
+
 uv run --no-dev --extra deploy waitress-serve --listen=0.0.0.0:5000 --call collectives:create_app $WAITRESS_OPTS
