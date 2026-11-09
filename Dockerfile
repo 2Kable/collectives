@@ -12,6 +12,7 @@ COPY instance /app/instance/
 COPY logs /app/logs/
 
 COPY migrations /app/migrations/
+COPY etc /app/etc/
 COPY config.py pyproject.toml .python-version uv.lock README.md /app/
 
 COPY collectives /app/collectives/

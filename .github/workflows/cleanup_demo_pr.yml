@@ -1,0 +1,95 @@
+name: Cleanup PR Demo on Close
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  cleanup_demo:
+    name: Teardown Cloud Run Demo & Artifacts
+    runs-on: ubuntu-latest
+
+    # Strict security: Only run if author/actor is 2Kable on 2Kable/collectives
+    if: >-
+      github.repository == '2Kable/collectives' &&
+      github.actor == '2Kable' &&
+      github.event.pull_request.user.login == '2Kable' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      GCP_REGION: ${{ vars.GCP_REGION || 'europe-west1' }}
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      SERVICE_NAME: collectives-demo-pr-${{ github.event.pull_request.number }}
+      IMAGE_PACKAGE: collectives/demo-pr-${{ github.event.pull_request.number }}
+
+    steps:
+      - name: Authenticate to Google Cloud (Workload Identity Federation)
+        id: auth-wif
+        env:
+          WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+        if: env.WIF_PROVIDER != ''
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Authenticate to Google Cloud (Service Account Key Fallback)
+        id: auth-json
+        env:
+          WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          SA_KEY: ${{ secrets.GCP_CREDENTIALS_JSON || secrets.GCP_SA_KEY }}
+        if: env.WIF_PROVIDER == '' && env.SA_KEY != ''
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS_JSON || secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+
+      - name: Delete Cloud Run Service
+        run: |
+          echo "Checking if Cloud Run service '${SERVICE_NAME}' exists..."
+          if gcloud run services describe "${SERVICE_NAME}" --region="${GCP_REGION}" >/dev/null 2>&1; then
+            echo "Deleting Cloud Run service '${SERVICE_NAME}'..."
+            gcloud run services delete "${SERVICE_NAME}" --region="${GCP_REGION}" --quiet
+            echo "Cloud Run service deleted successfully."
+          else
+            echo "Service '${SERVICE_NAME}' does not exist or was already deleted."
+          fi
+
+      - name: Prune Docker Images in Artifact Registry
+        run: |
+          echo "Pruning Artifact Registry package: ${IMAGE_PACKAGE}..."
+          # Delete the docker package corresponding to this PR from the 'collectives' repository
+          if gcloud artifacts docker images list "${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/collectives" --filter="package ~ demo-pr-${PR_NUMBER}" --format="value(IMAGE)" | grep -q .; then
+            echo "Deleting images for demo-pr-${PR_NUMBER}..."
+            gcloud artifacts docker images delete "${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/collectives/demo-pr-${PR_NUMBER}" --delete-tags --quiet || true
+          else
+            echo "No container images found for PR #${PR_NUMBER}."
+          fi
+
+      - name: Update PR comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          COMMENT_MARKER="<!-- collectives-demo-pr-deploy-marker -->"
+          TEARDOWN_NOTE="${COMMENT_MARKER}
+          ### 🧹 Pull Request Demo Torn Down
+          The demo Cloud Run service \`${SERVICE_NAME}\` and its associated Artifact Registry container images have been deleted following PR #${PR_NUMBER} closure."
+
+          EXISTING_COMMENT_ID=$(gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" \
+            --jq ".[] | select(.body | contains(\"${COMMENT_MARKER}\")) | .id" | head -n 1)
+
+          if [ -n "$EXISTING_COMMENT_ID" ]; then
+            gh api --method PATCH "repos/${{ github.repository }}/issues/comments/${EXISTING_COMMENT_ID}" \
+              -f body="$TEARDOWN_NOTE"
+          fi
