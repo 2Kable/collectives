@@ -3,6 +3,7 @@ FROM node:22-slim AS frontend-builder
 WORKDIR /build/frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
+COPY collectives/static/css/ /build/collectives/static/css/
 COPY frontend/ ./
 RUN npm run build
 
