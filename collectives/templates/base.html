@@ -15,6 +15,12 @@
         <link href="https://unpkg.com/tabulator-tables@4.9.3/dist/css/materialize/tabulator_materialize.min.css" rel="stylesheet">
         <link rel="icon" href="{{ url_for('static', filename=config['FAVICON']) }}" />
         <script type="text/javascript">
+            window.__COLLECTIVES_CONTEXT__ = {
+                csrfToken: {{ csrf_token() | tojson }},
+                serverLocalTime: {{ server_local_time() | tojson }},
+                isAuthenticated: {{ current_user.is_authenticated | tojson }}
+            };
+
             function getServerLocalTime(){
                 return '{{server_local_time()}}';
             }
@@ -28,6 +34,7 @@
             }
         </script>
         <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+        {{ vite_assets() }}
 
         {% if Configuration.GOOGLE_ANALYTICS_UA %}
         <!-- Analytics -->

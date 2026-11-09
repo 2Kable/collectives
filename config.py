@@ -606,3 +606,20 @@ XLSX_TEMPLATE = os.path.join(basedir, "collectives/templates/exported_event.xlsx
 
 :type: string
 """
+
+VITE_DEV_SERVER_URL = environ.get("VITE_DEV_SERVER_URL", "http://localhost:5173")
+"""Base URL of the Vite development server used for React islands HMR.
+
+Can be set using environment variable.
+
+:type: string
+"""
+
+VITE_MANIFEST_PATH = os.path.join(
+    basedir, "collectives/static/dist/vite/.vite/manifest.json"
+)
+"""Path to the Vite production build manifest file.
+
+:type: string
+"""
+

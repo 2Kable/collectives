@@ -81,6 +81,14 @@ here in the same PR.
  * **UI2** Every page works on a phone: no horizontal scrolling, nothing cut
    off, buttons and fields usable by touch. Check a new or changed page at
    phone width before asking for a review.
+ * **FE1** Interactive frontend islands live in `frontend/src/islands/`, are
+   written in TypeScript + React with PrimeReact components, and are mounted in
+   Jinja templates using `{{ react_island("IslandName", props=...) }}`.
+ * **FE2** Frontend code is formatted and linted with Biome
+   (`npm --prefix frontend run lint`) and type-checked/built with Vite
+   (`npm --prefix frontend run build`).
+ * **FE3** Vite manages only React islands; global SCSS (`all.scss`) remains
+   managed by `Flask-Assets`.
 
 ## All language types
  * **ALL1** Do not add blank spaces at end of line.
