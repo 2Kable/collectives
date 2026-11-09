@@ -421,7 +421,6 @@ input[type="checkbox"] {
     }
 }
 
-button,
 .p-button {
     font-family: $font-family-primary;
     font-size: $font-size-s;
@@ -615,78 +614,22 @@ button,
 .p-paginator {
     background: transparent;
     border: none;
-    padding: 16px 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 4px;
     font-family: $font-family-primary;
 
-    .p-paginator-pages {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-
-        .p-paginator-page {
-            min-width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border: none;
-            color: $color-gray-dark;
-            font-weight: $font-weight-medium;
-            font-size: $font-size-s;
-            transition: background-color 0.2s, color 0.2s;
-
-            &:not(.p-highlight):hover {
-                background: $color-blue-bg-light;
-                color: $color-blue-primary-dark;
-            }
-
-            &.p-highlight {
-                background: $color-blue-primary-light !important;
-                border-color: $color-blue-primary-light !important;
-                color: $color-white !important;
-                font-weight: $font-weight-bold;
-
-                &:hover {
-                    background: $color-blue-primary-dark !important;
-                    border-color: $color-blue-primary-dark !important;
-                    color: $color-white !important;
-                }
-            }
-        }
+    .p-paginator-pages .p-paginator-page.p-highlight {
+        background: $color-blue-bg-light;
+        border-color: $color-blue-bg-light;
+        color: $color-blue-primary-dark;
+        font-weight: $font-weight-bold;
     }
 
-    .p-paginator-first,
-    .p-paginator-prev,
-    .p-paginator-next,
-    .p-paginator-last {
-        min-width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        border: none;
-        color: $color-gray-medium;
-        transition: background-color 0.2s, color 0.2s;
-
-        &:not(.p-disabled):hover {
-            background: $color-blue-bg-light;
-            color: $color-blue-primary-dark;
-        }
-    }
-
-    .p-dropdown {
-        height: 36px;
-        border-radius: 100px;
-        border: 1px solid $color-gray-light;
-        margin-left: 16px;
-        display: inline-flex;
-        align-items: center;
-
-        .p-dropdown-label {
-            padding: 0 8px 0 12px;
-            font-size: $font-size-s;
-            line-height: 34px;
-        }
+    .p-paginator-pages .p-paginator-page:not(.p-highlight):hover,
+    .p-paginator-first:not(.p-disabled):hover,
+    .p-paginator-prev:not(.p-disabled):hover,
+    .p-paginator-next:not(.p-disabled):hover,
+    .p-paginator-last:not(.p-disabled):hover {
+        background: $color-blue-bg-light;
+        color: $color-blue-primary-dark;
     }
 }
 
