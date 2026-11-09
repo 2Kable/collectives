@@ -178,9 +178,7 @@ jobs:
           service: ${{ env.SERVICE_NAME }}
           image: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/collectives/demo-pr-${{ github.event.pull_request.number || inputs.pr_number }}:${{ github.sha }}
           region: ${{ env.GCP_REGION }}
-          flags: '--port=5000 --allow-unauthenticated --min-instances=0 --max-instances=2'
-          env_vars: |
-            POPULATE_TEST_DATA=1
+          flags: '--port=5000 --allow-unauthenticated --min-instances=0 --max-instances=2 --set-env-vars=POPULATE_TEST_DATA=1'
 
       # -----------------------------------------------------------------------
       # Post/Update Demo URL Comment on the Pull Request
