@@ -655,3 +655,17 @@ def test_update_attendance_upcoming_event(
 
     assert "participation" in confirm_mail["subject"].lower()
     assert "bientôt" in confirm_mail["message"]
+
+
+def test_event_index_react_island(user1_client):
+    """Test that the events homepage mounts the EventList React island with props."""
+    response = user1_client.get("/collectives/")
+    assert response.status_code == 200
+    soup = BeautifulSoup(response.text, "html.parser")
+    island = soup.find(attrs={"data-react-island": "EventList"})
+    assert island is not None
+    props_script = island.find("script", attrs={"data-island-props": True})
+    assert props_script is not None
+    assert "activityGroups" in props_script.text
+    assert "eventTypes" in props_script.text
+    assert "eventTags" in props_script.text

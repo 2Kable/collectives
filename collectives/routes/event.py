@@ -36,6 +36,7 @@ from collectives.forms import EventForm, RegistrationForm, photos
 from collectives.forms.event import PaymentItemChoiceForm
 from collectives.forms.question import QuestionAnswersForm
 from collectives.models import (
+    ActivityKind,
     ActivityType,
     Badge,
     Configuration,
@@ -64,6 +65,7 @@ from collectives.utils import export
 from collectives.utils.access import confidentiality_agreement, valid_user
 from collectives.utils.crawlers import crawlers_catcher, is_crawler
 from collectives.utils.misc import sanitize_file_name
+from collectives.utils.render_markdown import markdown_to_html
 from collectives.utils.time import current_time
 from collectives.utils.url import slugify
 
@@ -228,12 +230,52 @@ def index(activity_type_id=None, name=""):
 
     event_types = EventType.get_all_types()
     activity_types = ActivityType.get_all_types()
+
+    activity_groups = [
+        {
+            "kind": kind.name,
+            "label": label,
+            "items": [
+                {"id": t.short, "name": t.name, "icon": t.icon}
+                for t in activity_types
+                if t.kind == kind
+            ],
+        }
+        for kind, label in (
+            (ActivityKind.Regular, "Activités"),
+            (ActivityKind.Initiative, "Initiatives"),
+            (ActivityKind.Service, "Services"),
+        )
+    ]
+    activity_groups = [group for group in activity_groups if group["items"]]
+
+    event_list_props = {
+        "activityGroups": activity_groups,
+        "eventTypes": [{"id": t.short, "name": t.name} for t in event_types],
+        "eventTags": [
+            {"id": tag["short"], "name": tag["name"]} for tag in EventTag.all().values()
+        ],
+        "eventStatusLabels": {
+            str(int(status)): label
+            for status, label in EventStatus.display_names().items()
+        },
+        "isAuthenticated": current_user.is_authenticated,
+        "initialActivity": filtered_activity.short if filtered_activity else None,
+        "siteParams": {
+            "coverLogo": url_for(
+                "static",
+                filename=f"caf/esprit club alpin {Configuration.COVER_LOGO_COLOR}.png",
+            ),
+            "arrowDown": url_for(
+                "static", filename="img/icon/ionicon/ios-arrow-down.svg"
+            ),
+            "bannerMessage": str(markdown_to_html(Configuration.BANNER_MESSAGE)),
+        },
+    }
+
     return render_template(
         "index.html",
-        activity_types=activity_types,
-        event_types=event_types,
-        photos=photos,
-        filtered_activity=filtered_activity,
+        event_list_props=event_list_props,
     )
 
 

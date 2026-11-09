@@ -81,6 +81,14 @@ here in the same PR.
  * **UI2** Every page works on a phone: no horizontal scrolling, nothing cut
    off, buttons and fields usable by touch. Check a new or changed page at
    phone width before asking for a review.
+ * **FE1** Interactive frontend islands live in `frontend/src/islands/`, are
+   written in TypeScript + React with PrimeReact components, and are mounted in
+   Jinja templates using `{{ react_island("IslandName", props=...) }}`.
+ * **FE2** Frontend code is formatted and linted with Biome
+   (`npm --prefix frontend run lint`) and type-checked/built with Vite
+   (`npm --prefix frontend run build`).
+ * **FE3** Vite manages only React islands; global SCSS (`all.scss`) remains
+   managed by `Flask-Assets`.
 
 ## All language types
  * **ALL1** Do not add blank spaces at end of line.
@@ -132,8 +140,10 @@ here in the same PR.
  * **TEST2** Reuse the fixtures from `tests/fixtures/`. Never combine two
    `*_client` fixtures in one test: use `client` and
    `fixtures.client.login()` to switch users.
- * **TEST3** Locally, run the test files related to the change
-   (`uv run pytest tests/<file>`) rather than the whole suite.
+ * **TEST3** Run only the tests related to the change:
+   - For backend changes: run the relevant test file (`uv run pytest tests/<file>`) rather than the whole suite.
+   - For frontend changes: run frontend tests (`npm --prefix frontend run test`).
+   Do not run backend tests for frontend-only work, and vice versa.
 
 ## Commit
  * **COM1** Message in English.
